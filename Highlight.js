@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         Ebumna : BoardGameArena
 // @namespace    https://ebumna.net/
-// @version      0.2
+// @version      0.3
 // @description  Highlight oneself (and select people) on the game in progress page
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/gameinprogress
 // @icon         http://en.studio.boardgamearena.com/favicon.ico
+// @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/Highlight.js
 // @grant        none
 // ==/UserScript==
 
