@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ebumna : BoardGameArena, Highlight
 // @namespace    https://ebumna.net/
-// @version      0.4
+// @version      0.5
 // @description  Highlight oneself (and select people) on the game in progress page
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -42,7 +42,7 @@
     const observer_gamesPanel = new MutationObserver(getGames);
     const observer_players = new MutationObserver(getPlayers);
     const observer_mainPanel = new MutationObserver(manageScript);
-    observer_mainPanel.observe(oMainPanel, config_element);
+    observer_mainPanel.observe(oMainPanel, config_stree);
 
     function manageScript() {
         if (/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
