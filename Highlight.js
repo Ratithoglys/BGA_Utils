@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ebumna : BoardGameArena, Highlight
 // @namespace    https://ebumna.net/
-// @version      0.5
+// @version      0.6
 // @description  Highlight oneself (and select people) on the game in progress page
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -46,7 +46,9 @@
 
     function manageScript() {
         if (/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
-            observer_userPanel.observe(oRoot, config_stree); // get user name
+            if (user == null || user === undefined) {
+                observer_userPanel.observe(oRoot, config_stree); // get user name
+            }
             observer_gamesPanel.observe(oRoot, config_stree); // check for current tables list
         }
         else {
@@ -57,13 +59,11 @@
     }
 
     function getUser() {
-        console.log('BGA> getUser()');
         if (document.querySelector('.bga-username') === undefined) {
             return;
         }
         else {
             user = document.querySelector('.bga-username').innerText;
-            console.log('BGA> Hello '+user);
             observer_userPanel.disconnect();
         }
     }
@@ -80,29 +80,29 @@
     }
 
     function getPlayers() {
-        var userCards = document.querySelectorAll(".tableplace > a[title='"+user+"']");
-        var friendCards = document.querySelectorAll(".tableplace > a");
+        var userCards = document.querySelectorAll(".tableplace > a");
 
         userCards.forEach( uc => {
-            uc.parentElement.style.borderRadius = '25px';
-            uc.nextSibling.querySelector('a').style.color = 'black';
-            if (uc.parentElement.classList.contains('tableplace_activeplayer_current')) {
-                uc.parentElement.style.backgroundColor = 'LightCoral';
-            }
-            else {
-                uc.parentElement.style.backgroundColor = 'LightGreen';
-            }
-        });
-
-        friendCards.forEach( fc => {
-            if (friends.indexOf(fc.getAttribute('title')) > -1) {
-                fc.parentElement.style.borderRadius = '25px';
-                fc.nextSibling.querySelector('a').style.color = 'black';
-                if (fc.parentElement.classList.contains('tableplace_activeplayer')) {
-                    fc.parentElement.style.backgroundColor = 'LightPink';
+            if (uc.getAttribute('title') == user) {
+                uc.parentElement.style.borderRadius = '25px';
+                uc.nextSibling.querySelector('a').style.color = 'black';
+                uc.querySelector('img.emblem').style.backgroundColor = 'white';
+                if (uc.parentElement.classList.contains('tableplace_activeplayer_current')) {
+                    uc.parentElement.style.backgroundColor = 'LightCoral';
                 }
                 else {
-                    fc.parentElement.style.backgroundColor = 'PeachPuff';
+                    uc.parentElement.style.backgroundColor = 'LightGreen';
+                }
+            }
+            else if (friends.indexOf(uc.getAttribute('title')) > -1) {
+                uc.parentElement.style.borderRadius = '25px';
+                uc.nextSibling.querySelector('a').style.color = 'black';
+                uc.querySelector('img.emblem').style.backgroundColor = 'white';
+                if (uc.parentElement.classList.contains('tableplace_activeplayer')) {
+                    uc.parentElement.style.backgroundColor = 'PeachPuff';
+                }
+                else {
+                    uc.parentElement.style.backgroundColor = 'LightBlue';
                 }
             }
         });
