@@ -1,11 +1,12 @@
 // ==UserScript==
-// @name         Ebumna : BoardGameArena
+// @name         Ebumna : BoardGameArena, Highlight
 // @namespace    https://ebumna.net/
-// @version      0.3
+// @version      0.4
 // @description  Highlight oneself (and select people) on the game in progress page
 // @author       Lénaïc JAOUEN
-// @match        https://boardgamearena.com/gameinprogress
+// @match        https://boardgamearena.com/*
 // @icon         http://en.studio.boardgamearena.com/favicon.ico
+// @updateURL    https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/Highlight.js
 // @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/Highlight.js
 // @grant        none
 // ==/UserScript==
@@ -16,6 +17,12 @@
     var user;
     const friends = [""]
 
+    const config_element = {
+        childList: true,
+        attributes: false,
+        characterData: false,
+        subtree: false
+    };
     const config_stree = {
         childList: true,
         attributes: false,
@@ -30,8 +37,24 @@
     };
 
     const oRoot = document.body;
+    const oMainPanel = document.querySelector('#main-content');
     const observer_userPanel = new MutationObserver(getUser);
-    observer_userPanel.observe(oRoot, config_stree);
+    const observer_gamesPanel = new MutationObserver(getGames);
+    const observer_players = new MutationObserver(getPlayers);
+    const observer_mainPanel = new MutationObserver(manageScript);
+    observer_mainPanel.observe(oMainPanel, config_element);
+
+    function manageScript() {
+        if (/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
+            observer_userPanel.observe(oRoot, config_stree); // get user name
+            observer_gamesPanel.observe(oRoot, config_stree); // check for current tables list
+        }
+        else {
+            observer_userPanel.disconnect();
+            observer_gamesPanel.disconnect();
+            observer_players.disconnect();
+        }
+    }
 
     function getUser() {
         console.log('BGA> getUser()');
@@ -40,31 +63,23 @@
         }
         else {
             user = document.querySelector('.bga-username').innerText;
-            observer_userPanel.disconnect();
             console.log('BGA> Hello '+user);
+            observer_userPanel.disconnect();
         }
     }
 
-    const oGamesPanel = document
-    const observer_gamesPanel = new MutationObserver(getGames);
-    const observer_players = new MutationObserver(spy_players);
-    observer_gamesPanel.observe(oRoot, config_stree);
-
     function getGames() {
-        console.log('BGA> getGames()');
         if (document.querySelector('.gametables_yours') === undefined) {
             return;
         }
         else {
-            console.log(document.querySelector('#gametables_yours'))
             observer_gamesPanel.disconnect();
+            getPlayers();
             observer_players.observe(document.querySelector('#gametables_yours'), config_streefull);
-            spy_players();
         }
     }
 
-    function spy_players() {
-        console.log('BGA> Spying…')
+    function getPlayers() {
         var userCards = document.querySelectorAll(".tableplace > a[title='"+user+"']");
         var friendCards = document.querySelectorAll(".tableplace > a");
 
