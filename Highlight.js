@@ -42,7 +42,7 @@
     const observer_gamesPanel = new MutationObserver(getGames);
     const observer_players = new MutationObserver(getPlayers);
     const observer_mainPanel = new MutationObserver(manageScript);
-    observer_mainPanel.observe(oMainPanel, config_stree);
+    observer_mainPanel.observe(oRoot, config_stree);
 
     function manageScript() {
         if (/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
