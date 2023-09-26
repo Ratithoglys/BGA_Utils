@@ -104,19 +104,19 @@ img.emblem { background-color: white; }
 
     //--- USER MANAGEMENT
     function getUser() {
-        logDebug('BGA> getUser()');
+        logDebug('getUser()');
         if (document.querySelector('.bga-username') === undefined) {
             return;
         }
         else {
             user = document.querySelector('.bga-username').innerText;
-            logDebug('BGA> Hello '+user);
+            logDebug('Hello '+user);
             observer_userPanel.disconnect();
         }
     }
 
     function getGames() {
-        logDebug('BGA> getGames()');
+        logDebug('getGames()');
         if (document.querySelector('.gametables_yours') === undefined) {
             return;
         }
@@ -128,12 +128,12 @@ img.emblem { background-color: white; }
     }
 
     function getPlayers() {
-        logDebug('BGA> getPlayers()')
+        logDebug('getPlayers()')
         observer_players.disconnect();
         var userCards = document.querySelectorAll(".tableplace > a");
 
         userCards.forEach( uc => {
-            logDebug('BGA> getPlayers() > friendCard ('+uc.getAttribute("title")+' for '+user+')');
+            logDebug('getPlayers() > friendCard ('+uc.getAttribute("title")+' for '+user+')');
             if (uc.getAttribute('title') == user) {
                 if (uc.parentElement.classList.contains('tableplace_activeplayer_current')) {
                     if (!uc.parentElement.classList.contains('tableplace_eb_cur_playing')) {
