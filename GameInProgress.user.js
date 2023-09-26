@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: Better GamesInProgress
 // @namespace    https://ebumna.net/
-// @version      0.8
+// @version      0.9
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -58,8 +58,8 @@ img.emblem { background-color: white; }
 `
 
     var user;
-    const friends = [""]
-    const specialFriend = [""]
+    const friends = [""];
+    const specialFriend = [""];
 
     const config_element = {
         childList: true,
@@ -123,6 +123,7 @@ img.emblem { background-color: white; }
         else {
             observer_gamesPanel.disconnect();
             getPlayers();
+            otherGamesBtn();
             observer_players.observe(document.querySelector('#gametables_yours'), config_streefull);
         }
     }
@@ -180,10 +181,28 @@ img.emblem { background-color: white; }
 
     function updateTableCount() {
         var cnt = document.querySelectorAll('#gametables_yours > div').length;
+        var active = document.querySelectorAll('.tableplace_activeplayer_current').length;
 
         if (document.querySelector('#tablesCount') === null) {
             document.querySelector('#games_in_progress h3').insertAdjacentHTML('beforeEnd','<span id="tablesCount"></span>');
         }
-        document.querySelector('#tablesCount').innerText = '(' + cnt + ')';
+        document.querySelector('#tablesCount').innerText = '(' + active + '/' + cnt + ')';
+    }
+
+    //--- OTHER GAMES
+    function otherGamesBtn() {
+        if (document.querySelector('#tglOtherGames') === null) {
+            document.querySelector('#all_games_in_progress h3').insertAdjacentHTML('afterbegin','<span id="tglOtherGames"><a herf="#" style="font-size: 0.7em">➕</a></span>&nbsp;');
+            document.querySelector('#tglOtherGames').addEventListener('click', function() { displayOtherGames(); }, false );
+            displayOtherGames();
+        }
+    }
+
+    function displayOtherGames() {
+        let btn = document.querySelector('#tglOtherGames');
+        if (btn.innerText == "➕") { btn.innerText = "➖"; } else { btn.innerText = "➕"; }
+
+        let e = document.querySelector('#game_in_progress_stats')
+        if (e.style.display == 'none') { e.style.display = null; } else { e.style.display = 'none'; };
     }
 })();
