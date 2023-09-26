@@ -6,8 +6,8 @@
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
 // @icon         http://en.studio.boardgamearena.com/favicon.ico
-// @updateURL    https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/Highlight.js
-// @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/Highlight.js
+// @updateURL    https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/General.user.js
+// @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/General.user.js
 // @grant        none
 // ==/UserScript==
 
