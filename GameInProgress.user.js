@@ -172,6 +172,18 @@ img.emblem { background-color: white; }
                 }
             }
         });
+
+        updateTableCount();
+
         observer_players.observe(document.querySelector('#gametables_yours'), config_streefull);
+    }
+
+    function updateTableCount() {
+        var cnt = document.querySelectorAll('#gametables_yours > div').length;
+
+        if (document.querySelector('#tablesCount') === null) {
+            document.querySelector('#games_in_progress h3').insertAdjacentHTML('beforeEnd','<span id="tablesCount"></span>');
+        }
+        document.querySelector('#tablesCount').innerText = '(' + cnt + ')';
     }
 })();
