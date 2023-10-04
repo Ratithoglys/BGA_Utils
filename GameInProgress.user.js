@@ -145,7 +145,29 @@ img.emblem { background-color: white; }
     function getPlayers() {
         logDebug('getPlayers()')
         observer_players.disconnect();
+        var tableCards = document.querySelectorAll('#gametables_yours > div[id^="gametable_"]');
         var userCards = document.querySelectorAll(".tableplace > a");
+
+        try {
+            tableCards.forEach( t => {
+                let tId = t.getAttribute('id').replace('gametable_','');
+                let tData = globalUserInfos.table_infos.tables[tId];
+
+                if (tData.tournament_id != null) {
+                    // t.querySelector('div.gametable_colored_indicator').insertAdjacentHTML('afterbegin','<div style="vertical-align: middle;">🏆</div>');
+                    t.querySelector('div.gametable_colored_indicator').innerHTML = '<div style="font-size: 2em;"><br/>🏆</div>'; //<a href="/tournament?id='+tData.tournament_id+'"></a>
+                    t.querySelector('div.gametable').style.backgroundColor = '#ffdf0040';
+                }
+                else if (tData.players[userId].table_matchmaking == 1) {
+                    t.querySelector('div.gametable_colored_indicator').innerHTML = '<div style="font-size: 2em;"><br/>⚔️</div>';
+                    t.querySelector('div.gametable').style.backgroundColor = '#4169E140';
+                }
+            });
+        } catch (error) {
+            document.querySelector('#games_in_progress div.pagesection__content').style.backgroundColor = 'lightPink';
+            console.log('Catché en tentant de colorier les tables')
+            console.error(error);
+        }
 
         userCards.forEach( uc => {
             logDebug('getPlayers() > friendCard ('+uc.getAttribute("title")+' for '+user+')');
