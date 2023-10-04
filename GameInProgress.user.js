@@ -65,8 +65,8 @@ img.emblem { background-color: white; }
 `
 
     var user;
-    const friends = [""];
-    const specialFriend = [""];
+    var userId;
+    var friends = [];
 
     const config_element = {
         childList: true,
@@ -96,6 +96,8 @@ img.emblem { background-color: white; }
     observer_mainPanel.observe(oRoot, config_stree);
 
     function manageScript() {
+        logDebug('manageScript()');
+
         if (/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
             if (user == null || user === undefined) {
                 observer_userPanel.observe(oRoot, config_stree); // get user name
@@ -124,6 +126,11 @@ img.emblem { background-color: white; }
 
     function getGames() {
         logDebug('getGames()');
+
+        user = globalUserInfos.name;
+        userId = globalUserInfos.id;
+        friends = []; globalUserInfos.friends_info.friends.forEach(f => { friends.push(f.name) });
+
         if (document.querySelector('.gametables_yours') === undefined) {
             return;
         }
@@ -157,15 +164,6 @@ img.emblem { background-color: white; }
                 }
             }
             else if (friends.indexOf(uc.getAttribute('title')) > -1) {
-                uc.parentElement.style.borderRadius = '25px';
-                if (uc.parentElement.classList.contains('tableplace_activeplayer')) {
-                    uc.parentElement.style.backgroundColor = 'PeachPuff';
-                }
-                else {
-                    uc.parentElement.style.backgroundColor = 'LightBlue';
-                }
-            }
-            else if (specialFriend.indexOf(uc.getAttribute('title')) > -1) {
                 if (uc.parentElement.classList.contains('tableplace_activeplayer')) {
                     if (!uc.parentElement.classList.contains('tableplace_eb_sfr_playing')) {
                         uc.parentElement.classList.add('tableplace_eb_sfr_playing');
@@ -187,25 +185,33 @@ img.emblem { background-color: white; }
     }
 
     function updateTableCount() {
+        if (/boardgamearena\.com\/gameinprogress\?player/.test(document.baseURI) || document.querySelector('#games_in_progress h3') == null) {
+            return;
+        }
+
         var cnt = document.querySelectorAll('#gametables_yours > div').length;
         var active = document.querySelectorAll('.tableplace_activeplayer_current').length;
 
         if (document.querySelector('#tablesCount') === null) {
             document.querySelector('#games_in_progress h3').insertAdjacentHTML('beforeEnd','<span id="tablesCount"></span>');
         }
-        document.querySelector('#tablesCount').innerText = '(' + active + '/' + cnt + ')';
+        document.querySelector('#tablesCount').innerText = ' (' + active + '/' + cnt + ')';
     }
 
     //--- OTHER GAMES
     function otherGamesBtn() {
         if (document.querySelector('#tglOtherGames') === null) {
-            document.querySelector('#all_games_in_progress h3').insertAdjacentHTML('afterbegin','<span id="tglOtherGames"><a herf="#" style="font-size: 0.7em">➕</a></span>&nbsp;');
+            document.querySelector('#all_games_in_progress h3').insertAdjacentHTML('afterbegin','<span id="tglOtherGames" style="font-size: 0.7em"><a herf="#">➖</a></span>&nbsp;');
             document.querySelector('#tglOtherGames').addEventListener('click', function() { displayOtherGames(); }, false );
             displayOtherGames();
         }
     }
 
     function displayOtherGames() {
+        if (/boardgamearena\.com\/gameinprogress\?player/.test(document.baseURI)) {
+            return;
+        }
+
         let btn = document.querySelector('#tglOtherGames');
         if (btn.innerText == "➕") { btn.innerText = "➖"; } else { btn.innerText = "➕"; }
 
