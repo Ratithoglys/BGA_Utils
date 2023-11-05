@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.10
+// @version      0.11
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -11,7 +11,7 @@
 // @grant        none
 // ==/UserScript==
 
-    
+
 // liste des jeux
 //globalUserInfos.game_list.forEach({e,i}=>{if (e.name='martiandice') {console.log('martian dice: '+i)} } );
 
@@ -290,9 +290,11 @@
         if (document.querySelector('#calendarDlg > p > a').attributes.length > 3) {
             let start = /href="/.exec(document.querySelector('#calendarDlg > p > a').outerHTML).index + 6;
             let end = /" class="/.exec(document.querySelector('#calendarDlg > p > a').outerHTML).index - 1;
-            let fixedLink = /href=\"(.*)\" /.exec(document.querySelector('#calendarDlg > p > a').outerHTML)[1].replace(/ /g,'').replace(/"/g,'');
+            let fixedLink = /href=\"(.*)\" /.exec(document.querySelector('#calendarDlg > p > a').outerHTML)[1].replace(/ /g,'').replace(/"/g,'').replace(/;output=xml/, ';src=fa609dcb7002d888c873a44e472e2cdccddc17491ff172ba64203d38d51fa29f@group.calendar.google.com&output=xml');
 
-            document.querySelector('#calendarDlg > p > a').outerHTML = document.querySelector('#calendarDlg > p > a').outerHTML.replace(document.querySelector('#calendarDlg > p > a').outerHTML.substring(start, end), /href=\"(.*)\" /.exec(document.querySelector('#calendarDlg > p > a').outerHTML)[1].replace(/ /g,'').replace(/"/g,''));
+            console.log(fixedLink);
+            document.querySelector('#calendarDlg > p > a').outerHTML = document.querySelector('#calendarDlg > p > a').outerHTML.replace(document.querySelector('#calendarDlg > p > a').outerHTML.substring(start, end), fixedLink);
+            // document.querySelector('#calendarDlg > p > a').outerHTML = document.querySelector('#calendarDlg > p > a').outerHTML += '&src=fa609dcb7002d888c873a44e472e2cdccddc17491ff172ba64203d38d51fa29f@group.calendar.google.com';
             document.querySelector('#calendarDlg > p > a').setAttribute('href', document.querySelector('#calendarDlg > p > a').getAttribute('href').replace(/&text=/,'&text=🎲%20'));
         }
         else {
