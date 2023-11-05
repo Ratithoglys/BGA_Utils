@@ -4,11 +4,10 @@
 // @version      0.1
 // @description  BoardGameArena: Games: downforce
 // @author       Lénaïc JAOUEN
-// @match        https://boardgamearena.com/.*/downforce?table=*
 // @match        https://boardgamearena.com/*/downforce?table=*
 // @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
-// @updateURL    https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/farkle.user.js
-// @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/farkle.user.js
+// @updateURL    https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/downforce.user.js
+// @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/downforce.user.js
 // @grant        none
 // ==/UserScript==
 
