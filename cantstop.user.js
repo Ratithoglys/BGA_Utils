@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: Can't Stop
 // @namespace    https://ebumna.net/
-// @version      0.1+
+// @version      0.1
 // @description  BoardGameArena: Games: Can't Stop
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/cantstop?table=*
