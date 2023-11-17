@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: 6 nimmt!
 // @namespace    https://ebumna.net/
-// @version      0.1
+// @version      0.2
 // @description  BoardGameArena: Games: 6 nimmt!
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/sechsnimmt?table=*
@@ -39,7 +39,7 @@
 
             let game_mode = document.querySelector('#footer_option_value_101').innerText;
 
-            if (game_mode.match(/professionnal/)) {
+            if (/Professional/.test(game_mode)) {
                 document.querySelector('#active_player_statusbar').insertAdjacentHTML('beforebegin','⬅️➡️');
             }
             else {
