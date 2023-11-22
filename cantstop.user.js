@@ -1,28 +1,27 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: Can't Stop
 // @namespace    https://ebumna.net/
-// @version      0.1
+// @version      0.2
 // @description  BoardGameArena: Games: Can't Stop
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/cantstop?table=*
 // @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
-// @updateURL    https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/cantstop.user.js
-// @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/cantstop.user.js
+// @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/cantstop.user.js
+// @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/cantstop.user.js
 // @grant        none
 // ==/UserScript==
 
 // TODO : Popup coloré pour mettre en évidence les jetons à regarder
 // TODO : Mettre en évidence les jetons déjà positionnés
 
-
 (function() {
     'use strict';
 
  	// Enable for debugging
-	const DEBUG = false;
-	const logDebug = (...msgs) => {
-		// eslint-disable-next-line no-console
-		if (DEBUG) console.log('BGA_GEN> ', msgs);
+    const DEBUG = false;
+    const logDebug = (...msgs) => {
+        // eslint-disable-next-line no-console
+        if (DEBUG) console.log('BGA_GEN> ', msgs);
 	};
 
     const config_childs = {
