@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: Heat
 // @namespace    https://ebumna.net/
-// @version      0.1
-// @description  BoardGameArena: Games: HEat
+// @version      0.2
+// @description  BoardGameArena: Games: Heat
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/heat?table=*
 // @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
-// @updateURL    https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/heat.user.js
-// @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/heat.user.js
+// @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/heat.user.js
+// @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/heat.user.js
 // @grant        none
 // ==/UserScript==
 
@@ -55,6 +55,7 @@
 
     const last_lap_popup = '<div id="last_lap_popup" style="display:block"><div class="roundedboxinner">🏁 This is the last lap 🏁</div></div>';
 
+    /* Récupération de la boite du joueur */
     function manageScript() {
         logDebug('manageScript');
         if (document.querySelector('#page-title') != null && document.querySelector('#page-title') != null) {
@@ -64,6 +65,7 @@
         }
     }
 
+    /* Popup pour le dernier tour */
     function alertLap() {
         logDebug('alertLap');
         let clap = document.querySelector('#lap-counter-5').innerText;
