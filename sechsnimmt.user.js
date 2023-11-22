@@ -1,17 +1,15 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: 6 nimmt!
 // @namespace    https://ebumna.net/
-// @version      0.2
+// @version      0.3
 // @description  BoardGameArena: Games: 6 nimmt!
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/sechsnimmt?table=*
 // @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
-// @updateURL    https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/sechsnimmt.user.js
-// @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/sechsnimmt.user.js
+// @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/sechsnimmt.user.js
+// @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/sechsnimmt.user.js
 // @grant        none
 // ==/UserScript==
-
-// TODO : Mise en évidence de la règle
 
 (function() {
     'use strict';
@@ -33,6 +31,7 @@
     const observer_banner = new MutationObserver(addOptionBanner);
     observer_banner.observe(document.body, config_childs);
 
+    /* Mise en évidence de la règle (normal/pro) */
     function addOptionBanner() {
         if (document.querySelector('#pagemaintitletext') != null) {
             observer_banner.disconnect();
