@@ -1,21 +1,22 @@
 // ==UserScript==
 // @name         BoardGameArena: GamesInProgress & Tournaments
 // @namespace    https://ebumna.net/
-// @version      0.11
+// @version      0.12
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
 // @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
-// @updateURL    https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/GameInProgress.user.js
-// @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/GameInProgress.user.js
+// @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/GameInProgress.user.js
+// @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/GameInProgress.user.js
 // @grant        none
 // ==/UserScript==
 
 // TODO : Filtre sur les joueurs
 // TODO : Filtre sur les parties en attente / a remplir
+// TODO : Filtre sur les jeux avec des retardataires
 // TODO : Reorder des jeux par état
 // TODO : Reorder des jeux par titre
-// TODO : Récupérer les ELOs pour notifier les jeux jouables
+// TODO : Bouton de refresh lorsque les tables plantent
 
 (function() {
     'use strict';
@@ -55,7 +56,7 @@
 .tableplace_eb_cur_ok, .tableplace_eb_cur_playing {
     border-radius: 25px;
 }
-.v2tournament__encounter-player--current a.v2tournament__encounter-player-name" {
+.v2tournament__encounter-player--current a.v2tournament__encounter-player-name.playername {
     color: black !important;
 }
 
@@ -86,26 +87,25 @@ a.trophy:hover {
 
 img.emblem { background-color: white; }
 
+.filter-box {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #f1f1f1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    z-index: 9999;
+}
 
-    .filter-box {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background-color: #f1f1f1;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-      z-index: 9999;
-    }
-
-    /* Style for the button images */
-    .filter-box img {
-      width: 30px;
-      height: 30px;
-      margin: 5px;
-      cursor: pointer;
-    }
+/* Style for the button images */
+.filter-box img {
+    width: 30px;
+    height: 30px;
+    margin: 5px;
+    cursor: pointer;
+}
 `
 
     var user;
@@ -135,47 +135,37 @@ img.emblem { background-color: white; }
 
     const oRoot = document.body;
     const oMainPanel = document.querySelector('#main-content');
-    const observer_userPanel = new MutationObserver(getUser);
+
     const observer_gamesPanel = new MutationObserver(getGames);
     const observer_players = new MutationObserver(getPlayers);
+
     const observer_mainPanel = new MutationObserver(manageScript);
     observer_mainPanel.observe(oRoot, config_stree);
 
+    /* Lancement de l'observeur observer_gamesPanel */
     function manageScript() {
         logDebug('manageScript()');
 
         if (/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
-            // if (user == null || user === undefined) {
-            //     observer_userPanel.observe(oRoot, config_stree); // get user name
-            // }
             observer_gamesPanel.observe(oRoot, config_stree); // check for current tables list
         }
         else {
-            observer_userPanel.disconnect();
             observer_gamesPanel.disconnect();
             observer_players.disconnect();
         }
     }
 
-    //--- USER MANAGEMENT
-    function getUser() {
-        logDebug('getUser()');
-        if (document.querySelector('.bga-username') === undefined) {
-            return;
-        }
-        else {
-            user = document.querySelector('.bga-username').innerText;
-            logDebug('Hello '+user);
-            observer_userPanel.disconnect();
-        }
-    }
-
+    /* Global variables
+     -> getPlayers
+     -> otherGamesBtn
+     -> addFilters
+     */
     function getGames() {
         logDebug('getGames()');
-
         user = globalUserInfos.name;
         userId = globalUserInfos.id;
-        friends = []; globalUserInfos.friends_info.friends.forEach(f => { friends.push(f.name) });
+        friends = [];
+        globalUserInfos.friends_info.friends.forEach(f => { friends.push(f.name) });
 
         if (document.querySelector('.gametables_yours') === undefined) {
             return;
