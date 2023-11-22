@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: Roll to the Top
 // @namespace    https://ebumna.net/
-// @version      0.1
+// @version      0.2
 // @description  BoardGameArena: Games: Roll to the Top
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/rolltothetopjourneys?table=*
 // @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
-// @updateURL    https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/rolltothetopjourneys.user.js
-// @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/rolltothetopjourneys.user.js
+// @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/rolltothetopjourneys.user.js
+// @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/rolltothetopjourneys.user.js
 // @grant        none
 // ==/UserScript==
 
