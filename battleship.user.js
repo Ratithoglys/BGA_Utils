@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: Battleship
 // @namespace    https://ebumna.net/
-// @version      0.1
+// @version      0.2
 // @description  BoardGameArena: Games: Battleship
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/battleship?table=*
 // @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
-// @updateURL    https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/battleship.user.js
-// @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/battleship.user.js
+// @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/battleship.user.js
+// @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/battleship.user.js
 // @grant        none
 // ==/UserScript==
 
