@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.13
+// @version      0.14
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
 // @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
-// @updateURL    https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/General.user.js
-// @downloadURL  https://raw.githubusercontent.com/Ratithoglys/BGA_Utils/main/General.user.js
+// @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/General.user.js
+// @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/General.user.js
 // @grant        none
 // ==/UserScript==
 
@@ -30,30 +30,6 @@
     var userColor = null;
 
     document.head.appendChild(document.createElement('style')).innerHTML = `
-#tournament_popup {
-    background-color: gold;
-    border-radius: 8px;
-    color: #000;
-    display: none;
-    font-size: 20px;
-    font-weight: 700;
-    margin: 10px 10px 20px;
-    padding: 8px;
-    text-align: center
-}
-
-#arena_popup {
-    background-color: royalblue;
-    border-radius: 8px;
-    color: #fff;
-    display: none;
-    font-size: 20px;
-    font-weight: 700;
-    margin: 10px 10px 20px;
-    padding: 8px;
-    text-align: center
-}
-
 .ebBox {
     display: inline-flex;
     flex-direction: column;
