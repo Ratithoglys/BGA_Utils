@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: GamesInProgress & Tournaments
 // @namespace    https://ebumna.net/
-// @version      0.13
+// @version      0.14
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -197,39 +197,39 @@ img.emblem { background-color: white; }
         observer_players.disconnect();
         var tableCards = document.querySelectorAll('#gametables_yours > div[id^="gametable_"]');
 
-        try {
             tableCards.forEach( t => {
-                let tId = t.getAttribute('id').replace('gametable_','');
-                let tData = globalUserInfos.table_infos.tables[tId];
+                try {
+                    let tId = t.getAttribute('id').replace('gametable_','');
+                    let tData = globalUserInfos.table_infos.tables[tId];
 
-                if (typeof tData === undefined || typeof tData.has_tournament == undefined) { // new tables have no data
-                    t.style.border = "3px solid red";
-                    return;
-                }
+                    if (typeof tData === undefined || typeof tData.has_tournament == undefined) { // new tables have no data
+                        t.style.border = "3px solid red";
+                        return;
+                    }
 
-                if (tData.has_tournament == 1) {
-                    t.querySelector('div.gametable_colored_indicator').innerHTML = '<div style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%); z-index: 999;"><a href="/tournament?id='+tData.tournament_id+'" class="trophy">🏆</a></div>'; //<a href="/tournament?id='+tData.tournament_id+'"></a>
-                    t.querySelector('div.gametable').style.backgroundColor = '#ffdf0040';
-                }
-                else if (tData.players[userId].table_matchmaking == 1) {
-                    t.querySelector('div.gametable_colored_indicator').innerHTML = '<div style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">⚔️</div>';
-                    t.querySelector('div.gametable').style.backgroundColor = '#4169E140';
-                }
-                else if (tData.options[201] == 1) {
-                    t.querySelector('div.gametable_colored_indicator').innerHTML = '<div style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">❤️</div>';
-                    t.querySelector('div.gametable').style.backgroundColor = 'lightgrey';
-                }
+                    if (tData.has_tournament == 1) {
+                        t.querySelector('div.gametable_colored_indicator').innerHTML = '<div style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%); z-index: 999;"><a href="/tournament?id='+tData.tournament_id+'" class="trophy">🏆</a></div>'; //<a href="/tournament?id='+tData.tournament_id+'"></a>
+                        t.querySelector('div.gametable').style.backgroundColor = '#ffdf0040';
+                    }
+                    else if (tData.players[userId].table_matchmaking == 1) {
+                        t.querySelector('div.gametable_colored_indicator').innerHTML = '<div style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">⚔️</div>';
+                        t.querySelector('div.gametable').style.backgroundColor = '#4169E140';
+                    }
+                    else if (tData.options[201] == 1) {
+                        t.querySelector('div.gametable_colored_indicator').innerHTML = '<div style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">❤️</div>';
+                        t.querySelector('div.gametable').style.backgroundColor = 'lightgrey';
+                    }
 
-                if (t.querySelector('.game_link') == null) {
-                    t.querySelector('.game_icon').outerHTML = '<a href="/gamepanel?game=' + t.querySelector('[id^=gametable_game_url]').innerText.match(/.*boardgamearena\.com\/\d+\/(.*)?\?/)[1] + '" class="game_link">' + t.querySelector('.game_icon').outerHTML + '</a>';
+                    if (t.querySelector('.game_link') == null) {
+                        t.querySelector('.game_icon').outerHTML = '<a href="/gamepanel?game=' + t.querySelector('.game_icon').getAttribute('src').match(/\/gamemedia\/(.*)?\/icon/)[1] + '" class="game_link">' + t.querySelector('.game_icon').outerHTML + '</a>';
+                    }
+                } catch (error) {
+                    document.querySelector('#games_in_progress div.pagesection__content').style.backgroundColor = 'lightPink';
+                    console.log('Error for table: ' + t.id);
+                    console.error(error);
+                    console.error(globalUserInfos.table_infos.tables);
                 }
             });
-        } catch (error) {
-            document.querySelector('#games_in_progress div.pagesection__content').style.backgroundColor = 'lightPink';
-            console.log('Catché en tentant de colorier les tables')
-            console.error(error);
-            console.error(globalUserInfos.table_infos.tables);
-        }
 
         updateTableCount();
     }
