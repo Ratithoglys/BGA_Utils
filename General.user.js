@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.14
+// @version      0.15
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -11,11 +11,8 @@
 // @grant        none
 // ==/UserScript==
 
-
 // liste des jeux
 //globalUserInfos.game_list.forEach({e,i}=>{if (e.name='martiandice') {console.log('martian dice: '+i)} } );
-
-// TODO : Gestion différenciée des écrans téléphone
 
 (function() {
     'use strict';
@@ -30,6 +27,11 @@
     var userColor = null;
 
     document.head.appendChild(document.createElement('style')).innerHTML = `
+#game-logo {
+    position: absolute;
+    left: 200px;
+    top: 5px;
+}
 .ebBox {
     display: inline-flex;
     flex-direction: column;
@@ -164,6 +166,17 @@
     /* GENERAL TOPBAR UI BUTTONS */
     function addGamesButtons() {
         logDebug('addGamesButton()');
+
+        /* GAMES : Button linking to the game page */
+        if (/boardgamearena\.com\/\d+\//.test(document.baseURI) && document.querySelector('#game-logo') == null) {
+            if (typeof gameui === 'undefined') {
+                return;
+            }
+
+            document.querySelector('#site-logo').insertAdjacentHTML('afterend','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_name_displayed + '"></a></div>');
+        }
+
+        /* GAMES / MENU : Button linking to the current tables */
         if (document.querySelector('#backToTables') === null) {
             if ((/boardgamearena\.com\/\d+\//.test(document.baseURI) || /boardgamearena\.com\/tutorial\?/.test(document.baseURI)) && document.querySelector('#upperrightmenu') !== null) {
                 logDebug('addGamesButton() > 🎲 Table > topbar_content');
@@ -176,13 +189,15 @@
                 document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="backToTables" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/gameinprogress">🎲 Tables  </a>');
             }
         }
+
+        /* MENU : Button linking to the tournaments */
         if (document.querySelector('#tournamentsList') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
                 observer_menu.disconnect();
                 document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="tournamentsList" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/tournamentlist">🏆 Tournois  </a>');
             }
         }
-    }
+   }
 
     /* GAMES */
     /** Player color **/
@@ -213,20 +228,17 @@
             observer_banner.disconnect();
             if (gameui.tournament_id !== null && document.querySelector('#arena_ending_soon') !== null) {
                 addBox('RankInfo');
-                //document.querySelector('#arena_ending_soon').insertAdjacentHTML('beforebegin', tournament_popup);
-                addBoxTitleLine('RankInfo', '🏆 Tournament match 🏆');
+                addBoxTitleLine('RankInfo', '🏆 <a href="/tournament?id='+gameui.tournament_id+'" class="">Tournament</a> 🏆');
                 document.querySelector('#ebBox-RankInfo > div').style.backgroundColor = 'gold';
             }
             else if (document.body.classList.contains('arena_mode') && document.querySelector('#arena_ending_soon') !== null) {
                 addBox('RankInfo');
-                //document.querySelector('#arena_ending_soon').insertAdjacentHTML('beforebegin', arena_popup);
-                addBoxTitleLine('RankInfo', '⚔️ Arena match ⚔️');
+                addBoxTitleLine('RankInfo', '⚔️ Arena ⚔️');
                 document.querySelector('#ebBox-RankInfo > div').style.backgroundColor = 'royalblue';
             }
             else if (document.body.classList.contains('training_mode') && document.querySelector('#arena_ending_soon') !== null) {
                 addBox('RankInfo');
-                //document.querySelector('#arena_ending_soon').insertAdjacentHTML('beforebegin', arena_popup);
-                addBoxTitleLine('RankInfo', '❤️ Friendly match ❤️');
+                addBoxTitleLine('RankInfo', '❤️ Friendly ❤️');
                 document.querySelector('#ebBox-RankInfo > div').style.backgroundColor = 'lightgrey';
             }
         }
