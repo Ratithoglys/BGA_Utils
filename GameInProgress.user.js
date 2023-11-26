@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: GamesInProgress & Tournaments
 // @namespace    https://ebumna.net/
-// @version      0.14
+// @version      0.15
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -91,6 +91,48 @@ a.game_link:hover {
 
 img.emblem { background-color: white; }
 
+/* filtering */
+#filter_players {
+    background-color: rgba(65, 105, 225, 0.1);
+    border: 1px solid blue;
+    border-radius: 15px;
+    padding: 5px;
+}
+#filter_games {
+    background-color: rgba(65, 225, 105, 0.1);
+    border: 1px solid green;
+    border-radius: 15px;
+    padding: 5px;
+}
+#filter_misc {
+    background-color: rgba(229, 225, 169, 0.1);
+    border: 1px solid gold;
+    border-radius: 15px;
+    padding: 5px;
+}
+.filter-button {
+  transition: background-color 200ms, color 200ms;
+  background-color: #f3f3f3;
+  font: inherit;
+  cursor: pointer;
+  display: inline-block;
+  padding: 0 8px;
+  color: #717171;
+  border: 1px solid #9b9b9b;
+  border-radius: 25px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.filter-button:hover {
+  background-color: #c3c3c3;
+  color: #3a3a3a;
+}
+.filter-button.is-active {
+  background-color: #b50084;
+  border-color: #8a00b5;
+  color: #fff;
+}
+
 .filter-box {
     position: fixed;
     top: 20px;
@@ -142,6 +184,7 @@ img.emblem { background-color: white; }
 
     const observer_gamesPanel = new MutationObserver(getGames);
     const observer_players = new MutationObserver(getPlayers);
+    const observer_filters = new MutationObserver(addFilters);
 
     const observer_mainPanel = new MutationObserver(manageScript);
     observer_mainPanel.observe(oRoot, config_stree);
@@ -169,7 +212,7 @@ img.emblem { background-color: white; }
         user = globalUserInfos.name;
         userId = globalUserInfos.id;
         friends = [];
-        globalUserInfos.friends_info.friends.forEach(f => { friends.push(f.name) });
+        globalUserInfos.friends_info.friends.toSorted().forEach(f => { friends.push(f.name) });
 
         if (document.querySelector('.gametables_yours') === undefined) {
             return;
@@ -179,10 +222,10 @@ img.emblem { background-color: white; }
             getTables();
             getPlayers();
             otherGamesBtn();
-            addFilters();
 
             if (document.querySelector('#gametables_yours') !== null) {
                 observer_players.observe(document.querySelector('#gametables_yours'), config_streefull);
+                observer_filters.observe(document.querySelector('#gametables_yours'), config_element);
             }
         }
     }
@@ -208,15 +251,15 @@ img.emblem { background-color: white; }
                     }
 
                     if (tData.has_tournament == 1) {
-                        t.querySelector('div.gametable_colored_indicator').innerHTML = '<div style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%); z-index: 999;"><a href="/tournament?id='+tData.tournament_id+'" class="trophy">🏆</a></div>'; //<a href="/tournament?id='+tData.tournament_id+'"></a>
+                        t.querySelector('div.gametable_colored_indicator').innerHTML = '<div class="tournament_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%); z-index: 999;"><a href="/tournament?id='+tData.tournament_id+'" class="trophy">🏆</a></div>'; //<a href="/tournament?id='+tData.tournament_id+'"></a>
                         t.querySelector('div.gametable').style.backgroundColor = '#ffdf0040';
                     }
                     else if (tData.players[userId].table_matchmaking == 1) {
-                        t.querySelector('div.gametable_colored_indicator').innerHTML = '<div style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">⚔️</div>';
+                        t.querySelector('div.gametable_colored_indicator').innerHTML = '<div class="arena_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">⚔️</div>';
                         t.querySelector('div.gametable').style.backgroundColor = '#4169E140';
                     }
                     else if (tData.options[201] == 1) {
-                        t.querySelector('div.gametable_colored_indicator').innerHTML = '<div style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">❤️</div>';
+                        t.querySelector('div.gametable_colored_indicator').innerHTML = '<div class="friendly_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">❤️</div>';
                         t.querySelector('div.gametable').style.backgroundColor = 'lightgrey';
                     }
 
@@ -281,6 +324,7 @@ img.emblem { background-color: white; }
         }
     }
 
+    /* Compter les tables en attente de jeu */
     function updateTableCount() {
         if (/boardgamearena\.com\/gameinprogress\?player/.test(document.baseURI) || document.querySelector('#games_in_progress h3') == null) {
             return;
@@ -296,38 +340,7 @@ img.emblem { background-color: white; }
     }
 
     //--- FILTER CONTENT
-    function addFilters() {
-        if (!/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
-            return;
-        }
-
-        if (document.querySelector('#filter_search') === null && document.querySelector('#gametables_yours_wrap > p') != null) {
-            document.querySelector('#gametables_yours_wrap > p').insertAdjacentHTML('afterend','<p id="filter_search"><input type="text"></p>')
-        }
-        else {
-            return;
-        }
-
-        addFriendFilterBar();
-        addGameFilterBar();
-    }
-
-    function getCurrentGames() {
-//         const elements = document.querySelectorAll('.gametable_content');
-//         const occurrences = {};
-
-//         elements.forEach(element => {
-//             const innerText = element.querySelector('.gamename').innerText;
-//             if (occurrences[innerText]) {
-//                 occurrences[innerText].nb++;
-//             } else {
-//                 occurrences[innerText] = {
-//                     title: innerText,
-//                     nb: 1,
-//                     icon: element.querySelector('.gameinfo').innerHTML
-//                 };
-//             }
-//         });
+    function getGameList() {
         const uniqueValues = [];
         document.querySelectorAll('span.gamename').forEach((element) => {
             const innerText = element.innerText;
@@ -337,12 +350,30 @@ img.emblem { background-color: white; }
             }
         });
 
-        return uniqueValues;
+        return uniqueValues.toSorted();
     }
 
-    function addGameFilterBar() {
+    function addFilters() {
+        if (!/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
+            return;
+        }
+
+        if (document.querySelector('#filter_search') === null && document.querySelector('#gametables_yours_wrap > p') != null) {
+            //document.querySelector('#gametables_yours_wrap > p').insertAdjacentHTML('afterend','<p id="filter_search"><input type="text"></p>')
+        }
+        else {
+            return;
+        }
+
+        addGamesFilterBar();
+        addFriendsFilterBar();
+        addMiscFilterBar();
+    }
+
+    function addGamesFilterBar() {
+        console.log('addGameFilterBar()');
         if (document.querySelector('#filter_games') === null && document.querySelector('#gametables_yours_wrap > p') != null) {
-            document.querySelector('#gametables_yours_wrap > p').insertAdjacentHTML('afterend','<p id="filter_games"></p>')
+            document.querySelector('#gametables_yours_wrap > p').insertAdjacentHTML('afterend','<p id="filter_games"></p>');
         }
         else {
             return;
@@ -351,15 +382,20 @@ img.emblem { background-color: white; }
         let bar = document.querySelector('#filter_games');
         bar.innerHTML = '';
 
-        const games = getCurrentGames();
-        games.forEach(e => {
-            bar.insertAdjacentHTML('afterbegin', '<a class=\'bgabutton bgabutton_green\'>'+e+'</a> ');
+        const games = getGameList();
+        games.forEach(g => {
+            let button = document.createElement('a');
+            button.classList.add('filter-button');
+            button.setAttribute('data-state', 'inactive');
+            button.innerText = g;
+            button.addEventListener("click", (e) => handleFilterClick(e, g));
+            bar.append(button);
         });
     }
 
-    function addFriendFilterBar() {
+    function addFriendsFilterBar() {
         if (document.querySelector('#filter_players') === null && document.querySelector('#gametables_yours_wrap > p') != null) {
-            document.querySelector('#gametables_yours_wrap > p').insertAdjacentHTML('afterend','<p id="filter_players"></p>')
+            document.querySelector('#gametables_yours_wrap > p').insertAdjacentHTML('afterend','<p id="filter_players"></p>');
         }
         else {
             return;
@@ -368,12 +404,151 @@ img.emblem { background-color: white; }
         let bar = document.querySelector('#filter_players');
         bar.innerHTML = '';
 
-        friends.forEach(e => {
-            bar.insertAdjacentHTML('afterbegin', '<a class=\'bgabutton bgabutton_blue\'>'+e+'</a> ');
+        friends.forEach(f => {
+            let button = document.createElement('a');
+            button.classList.add('filter-button');
+            button.setAttribute('data-state', 'inactive');
+            button.innerText = f;
+            button.addEventListener("click", (e) => handleFilterClick(e, f));
+            bar.append(button);
         });
-        // specialFriend.forEach(e => {
-        //     bar.insertAdjacentHTML('afterbegin', '<a class=\'bgabutton bgabutton_red\'>'+e+'</a> ');
-        // });
+    }
+
+    function addMiscFilterBar() {
+        if (document.querySelector('#filter_misc') === null && document.querySelector('#gametables_yours_wrap > p') != null) {
+            document.querySelector('#gametables_yours_wrap > p').insertAdjacentHTML('afterend','<p id="filter_misc"></p>');
+        }
+        else {
+            return;
+        }
+
+        let bar = document.querySelector('#filter_misc');
+        bar.innerHTML = '';
+
+        let misc = ['🟡 Waiting', '⌚ Late', '⚪ Regular', '🏆 Tournament', '⚔️ Arena', '❤️ Friendly']
+
+        misc.forEach(m => {
+            let button = document.createElement('a');
+            button.classList.add('filter-button');
+            button.setAttribute('data-state', 'inactive');
+            button.innerText = m;
+            button.addEventListener("click", (e) => handleFilterClick(e, m.split(' ')[1]));
+            bar.append(button);
+        });
+    }
+
+    /* FILTER LOGIC */
+    function handleFilterTables(param, context) {
+        if (context == 'filter_games') {
+            handleFilterTablesForGame(param);
+        }
+        else if (context == 'filter_players') {
+            handleFilterTablesForPlayer(param);
+        }
+        else if (context == 'filter_misc') {
+            handleFilterTablesForMisc(param);
+        }
+    }
+
+    function handleFilterTablesForGame(param) {
+        let tables = document.querySelectorAll('#gametables_yours > div[id^="gametable_"]');
+        [...tables].map(t => {
+            if (t.querySelector('.gamename').innerText !== param) {
+                t.style.display = 'none';
+            }
+        });
+    }
+
+    function handleFilterTablesForPlayer(param) {
+        let tables = document.querySelectorAll('#gametables_yours > div[id^="gametable_"]');
+        [...tables].map(t => {
+            let players = t.querySelectorAll('.playername');
+            let playernames = [];
+            [...players].map(p => { playernames.push(p.innerText) });
+            if (playernames.includes(param) == false) {
+                t.style.display = 'none';
+            }
+        });
+    }
+
+    function handleFilterTablesForMisc(param) {
+        let tables = document.querySelectorAll('#gametables_yours > div[id^="gametable_"]');
+
+        [...tables].map(t => {
+            switch(param) {
+                case 'Waiting':
+        console.log(param);
+                    if (t.querySelector('.tableplace_eb_cur_playing') == null) {
+                        t.style.display = 'none';
+                    }
+                    break;
+                case 'Late':
+        console.log(param);
+                    if (t.querySelector('.tableplace_activeplayer_clockalert') == null) {
+                        t.style.display = 'none';
+                    }
+                    break;
+                case 'Regular':
+        console.log(param);
+                     if (t.querySelector('.tournament_indicator') != null || t.querySelector('.arena_indicator') != null || t.querySelector('.friendly_indicator') != null) {
+                         t.style.display = 'none';
+                     }
+                    break;
+                case 'Tournament':
+        console.log(param);
+                    if (t.querySelector('.tournament_indicator') == null) {
+                        t.style.display = 'none';
+                    }
+                    break
+                case 'Arena':
+        console.log(param);
+                    if (t.querySelector('.arena_indicator') == null) {
+                        t.style.display = 'none';
+                    }
+                    break;
+                case 'Friendly':
+        console.log(param);
+                    if (t.querySelector('.friendly_indicator') == null) {
+                        t.style.display = 'none';
+                    }
+                    break;
+            }
+        });
+    }
+
+    function handleFilterClick(e, param) {
+        const button = e.target;
+        const buttonState = button.getAttribute('data-state');
+        const context = e.target.parentElement.id;
+        resetFilterButtons(button, context);
+
+        if (buttonState =='inactive') {
+            resetFilterTables();
+            button.classList.add('is-active');
+            button.setAttribute('data-state', 'active');
+            handleFilterTables(param, context);
+        } else {
+            button.classList.remove('is-active');
+            button.setAttribute('data-state', 'inactive')
+            resetFilterTables();
+        }
+    }
+
+    function resetFilterButtons(currentButton, currentContext) {
+        const filterButtons = document.querySelectorAll('#'+currentContext+' .filter-button');
+        [...filterButtons].map(button => {
+            if (button != currentButton) {
+                button.classList.remove('is-active');
+                button.setAttribute('data-state', 'inactive')
+            }
+        })
+    }
+
+    function resetFilterTables() {
+        let tables = document.querySelectorAll('#gametables_yours > div[id^="gametable_"]');
+        [...tables].map(t => {
+            t.style.display = null;
+        });
     }
 
     //--- OTHER GAMES (text table underneath)
