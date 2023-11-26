@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: GamesInProgress & Tournaments
 // @namespace    https://ebumna.net/
-// @version      0.15
+// @version      0.16
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -11,9 +11,6 @@
 // @grant        none
 // ==/UserScript==
 
-// TODO : Filtre sur les joueurs
-// TODO : Filtre sur les parties en attente / a remplir
-// TODO : Filtre sur les jeux avec des retardataires
 // TODO : Reorder des jeux par état
 // TODO : Reorder des jeux par titre
 // TODO : Bouton de refresh lorsque les tables plantent
@@ -214,7 +211,7 @@ img.emblem { background-color: white; }
         friends = [];
         globalUserInfos.friends_info.friends.toSorted().forEach(f => { friends.push(f.name) });
 
-        if (document.querySelector('.gametables_yours') === undefined) {
+        if (document.querySelector('.gametables_yours') === 'undefined') {
             return;
         }
         else {
@@ -245,7 +242,7 @@ img.emblem { background-color: white; }
                     let tId = t.getAttribute('id').replace('gametable_','');
                     let tData = globalUserInfos.table_infos.tables[tId];
 
-                    if (typeof tData === undefined || typeof tData.has_tournament == undefined) { // new tables have no data
+                    if (typeof tData === 'undefined' || typeof tData.has_tournament === 'undefined') { // new tables have no data
                         t.style.border = "3px solid red";
                         return;
                     }
