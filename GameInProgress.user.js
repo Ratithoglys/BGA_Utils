@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: GamesInProgress & Tournaments
 // @namespace    https://ebumna.net/
-// @version      0.16
+// @version      0.17
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -13,7 +13,6 @@
 
 // TODO : Reorder des jeux par état
 // TODO : Reorder des jeux par titre
-// TODO : Bouton de refresh lorsque les tables plantent
 
 (function() {
     'use strict';
@@ -108,26 +107,31 @@ img.emblem { background-color: white; }
     padding: 5px;
 }
 .filter-button {
-  transition: background-color 200ms, color 200ms;
-  background-color: #f3f3f3;
-  font: inherit;
-  cursor: pointer;
-  display: inline-block;
-  padding: 0 8px;
-  color: #717171;
-  border: 1px solid #9b9b9b;
-  border-radius: 25px;
-  font-size: 14px;
-  white-space: nowrap;
+    transition: background-color 200ms, color 200ms;
+    background-color: #f3f3f3;
+    font: inherit;
+    cursor: pointer;
+    display: inline-block;
+    padding: 0 8px;
+    color: #717171;
+    border: 1px solid #9b9b9b;
+    border-radius: 25px;
+    font-size: 14px;
+    white-space: nowrap;
+    margin: 0 2px;
 }
 .filter-button:hover {
-  background-color: #c3c3c3;
-  color: #3a3a3a;
+    background-color: #c3c3c3;
+    color: #3a3a3a;
 }
 .filter-button.is-active {
-  background-color: #b50084;
-  border-color: #8a00b5;
-  color: #fff;
+    background-color: #b50084;
+    border-color: #8a00b5;
+    color: #fff;
+}
+.filter-btn-img {
+   height: 1em;
+   vertical-align: middle;
 }
 
 .filter-box {
@@ -183,19 +187,33 @@ img.emblem { background-color: white; }
     const observer_players = new MutationObserver(getPlayers);
     const observer_filters = new MutationObserver(addFilters);
 
+    /* TOURNAMENT LIST */
+    const observer_tournamentList = new MutationObserver(improveTournamentsList);
+    /* TOURNAMENT > Calendar links - Once per load */
+    const observer_tournament = new MutationObserver(improveTournamentDetails);
+    const observer_calendar = new MutationObserver(fixCalendarLinks);
+
     const observer_mainPanel = new MutationObserver(manageScript);
     observer_mainPanel.observe(oRoot, config_stree);
 
     /* Lancement de l'observeur observer_gamesPanel */
     function manageScript() {
-        logDebug('manageScript()');
-
         if (/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
             observer_gamesPanel.observe(oRoot, config_stree); // check for current tables list
+        }
+        else if (/boardgamearena\.com\/tournamentlist\?/.test(document.baseURI) && document.querySelector('#tournament_list') != null) {
+            observer_tournamentList.observe(document.querySelector('#tournament_list'), config_element);
+        }
+        else if (/boardgamearena\.com\/tournament\?id=/.test(document.baseURI)) {
+            observer_tournament.observe(document.body, config_stree);
+            observer_calendar.observe(document.body, config_element);
         }
         else {
             observer_gamesPanel.disconnect();
             observer_players.disconnect();
+            observer_tournamentList.disconnect();
+            observer_tournament.disconnect();
+            observer_calendar.disconnect();
         }
     }
 
@@ -211,7 +229,7 @@ img.emblem { background-color: white; }
         friends = [];
         globalUserInfos.friends_info.friends.toSorted().forEach(f => { friends.push(f.name) });
 
-        if (document.querySelector('.gametables_yours') === 'undefined') {
+        if (typeof globalUserInfos === 'undefined') {
             return;
         }
         else {
@@ -237,39 +255,40 @@ img.emblem { background-color: white; }
         observer_players.disconnect();
         var tableCards = document.querySelectorAll('#gametables_yours > div[id^="gametable_"]');
 
-            tableCards.forEach( t => {
-                try {
-                    let tId = t.getAttribute('id').replace('gametable_','');
-                    let tData = globalUserInfos.table_infos.tables[tId];
+        tableCards.forEach( t => {
+            try {
+                let tId = t.getAttribute('id').replace('gametable_','');
+                let tData = globalUserInfos.table_infos.tables[tId];
 
-                    if (typeof tData === 'undefined' || typeof tData.has_tournament === 'undefined') { // new tables have no data
-                        t.style.border = "3px solid red";
-                        return;
-                    }
-
-                    if (tData.has_tournament == 1) {
-                        t.querySelector('div.gametable_colored_indicator').innerHTML = '<div class="tournament_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%); z-index: 999;"><a href="/tournament?id='+tData.tournament_id+'" class="trophy">🏆</a></div>'; //<a href="/tournament?id='+tData.tournament_id+'"></a>
-                        t.querySelector('div.gametable').style.backgroundColor = '#ffdf0040';
-                    }
-                    else if (tData.players[userId].table_matchmaking == 1) {
-                        t.querySelector('div.gametable_colored_indicator').innerHTML = '<div class="arena_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">⚔️</div>';
-                        t.querySelector('div.gametable').style.backgroundColor = '#4169E140';
-                    }
-                    else if (tData.options[201] == 1) {
-                        t.querySelector('div.gametable_colored_indicator').innerHTML = '<div class="friendly_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">❤️</div>';
-                        t.querySelector('div.gametable').style.backgroundColor = 'lightgrey';
-                    }
-
-                    if (t.querySelector('.game_link') == null) {
-                        t.querySelector('.game_icon').outerHTML = '<a href="/gamepanel?game=' + t.querySelector('.game_icon').getAttribute('src').match(/\/gamemedia\/(.*)?\/icon/)[1] + '" class="game_link">' + t.querySelector('.game_icon').outerHTML + '</a>';
-                    }
-                } catch (error) {
-                    document.querySelector('#games_in_progress div.pagesection__content').style.backgroundColor = 'lightPink';
-                    console.log('Error for table: ' + t.id);
-                    console.error(error);
-                    console.error(globalUserInfos.table_infos.tables);
+                if (typeof tData === 'undefined' || typeof tData.has_tournament === 'undefined') { // new tables have no data
+                    t.querySelector('div.gametable').style.borderColor = "red";
+                    t.querySelector('div.gametable_upper_part_right').insertAdjacentHTML('afterend','<div style="font-size: 2em; float: right;">🆘</div>');
+                    return;
                 }
-            });
+
+                if (tData.has_tournament == 1) {
+                    t.querySelector('div.gametable_colored_indicator').innerHTML = '<div class="tournament_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%); z-index: 999;"><a href="/tournament?id='+tData.tournament_id+'" class="trophy">🏆</a></div>'; //<a href="/tournament?id='+tData.tournament_id+'"></a>
+                    t.querySelector('div.gametable').style.backgroundColor = '#ffdf0040';
+                }
+                else if (tData.players[userId].table_matchmaking == 1) {
+                    t.querySelector('div.gametable_colored_indicator').innerHTML = '<div class="arena_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">⚔️</div>';
+                    t.querySelector('div.gametable').style.backgroundColor = '#4169E140';
+                }
+                else if (tData.options[201] == 1) {
+                    t.querySelector('div.gametable_colored_indicator').innerHTML = '<div class="friendly_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">❤️</div>';
+                    t.querySelector('div.gametable').style.backgroundColor = 'lightgrey';
+                }
+
+                if (t.querySelector('.game_link') == null) {
+                    t.querySelector('.game_icon').outerHTML = '<a href="/gamepanel?game=' + t.querySelector('.game_icon').getAttribute('src').match(/\/gamemedia\/(.*)?\/icon/)[1] + '" class="game_link">' + t.querySelector('.game_icon').outerHTML + '</a>';
+                }
+            } catch (error) {
+                document.querySelector('#games_in_progress div.pagesection__content').style.backgroundColor = 'lightPink';
+                console.log('Error for table: ' + t.id);
+                console.error(error);
+                console.error(globalUserInfos.table_infos.tables);
+            }
+        });
 
         updateTableCount();
     }
@@ -368,7 +387,6 @@ img.emblem { background-color: white; }
     }
 
     function addGamesFilterBar() {
-        console.log('addGameFilterBar()');
         if (document.querySelector('#filter_games') === null && document.querySelector('#gametables_yours_wrap > p') != null) {
             document.querySelector('#gametables_yours_wrap > p').insertAdjacentHTML('afterend','<p id="filter_games"></p>');
         }
@@ -381,10 +399,13 @@ img.emblem { background-color: white; }
 
         const games = getGameList();
         games.forEach(g => {
+            // let button_img = document.createElement('img');
+            // button_img.classList.add('filter-btn-img');
+            // button_img.src = 'https://x.boardgamearena.net/data/data/gamemedia/' + ??? + '/icon/default.png';
             let button = document.createElement('a');
             button.classList.add('filter-button');
             button.setAttribute('data-state', 'inactive');
-            button.innerText = g;
+            button.innerText = " "+g;
             button.addEventListener("click", (e) => handleFilterClick(e, g));
             bar.append(button);
         });
@@ -474,37 +495,31 @@ img.emblem { background-color: white; }
         [...tables].map(t => {
             switch(param) {
                 case 'Waiting':
-        console.log(param);
                     if (t.querySelector('.tableplace_eb_cur_playing') == null) {
                         t.style.display = 'none';
                     }
                     break;
                 case 'Late':
-        console.log(param);
                     if (t.querySelector('.tableplace_activeplayer_clockalert') == null) {
                         t.style.display = 'none';
                     }
                     break;
                 case 'Regular':
-        console.log(param);
                      if (t.querySelector('.tournament_indicator') != null || t.querySelector('.arena_indicator') != null || t.querySelector('.friendly_indicator') != null) {
                          t.style.display = 'none';
                      }
                     break;
                 case 'Tournament':
-        console.log(param);
                     if (t.querySelector('.tournament_indicator') == null) {
                         t.style.display = 'none';
                     }
                     break
                 case 'Arena':
-        console.log(param);
                     if (t.querySelector('.arena_indicator') == null) {
                         t.style.display = 'none';
                     }
                     break;
                 case 'Friendly':
-        console.log(param);
                     if (t.querySelector('.friendly_indicator') == null) {
                         t.style.display = 'none';
                     }
@@ -517,7 +532,7 @@ img.emblem { background-color: white; }
         const button = e.target;
         const buttonState = button.getAttribute('data-state');
         const context = e.target.parentElement.id;
-        resetFilterButtons(button, context);
+        resetFilterButtons(button);
 
         if (buttonState =='inactive') {
             resetFilterTables();
@@ -531,8 +546,8 @@ img.emblem { background-color: white; }
         }
     }
 
-    function resetFilterButtons(currentButton, currentContext) {
-        const filterButtons = document.querySelectorAll('#'+currentContext+' .filter-button');
+    function resetFilterButtons(currentButton) {
+        const filterButtons = document.querySelectorAll('.filter-button');
         [...filterButtons].map(button => {
             if (button != currentButton) {
                 button.classList.remove('is-active');
@@ -573,5 +588,82 @@ img.emblem { background-color: white; }
         if (e.style.display == 'none') { e.style.display = null; } else { e.style.display = 'none'; };
     }
 
+    /* TOURNAMMENTS */
+    function improveTournamentsList() {
+        observer_tournamentList.disconnect();
+
+        // Swiss system => Red
+        document.querySelectorAll('.tournaments-list-result__type').forEach(t => {
+            if (/Swiss system/.test(t.innerText) && /class\=\"fa fa-sharp fa-solid fa-plus\"/.test(t.innerHTML) == false) {
+                t.innerHTML = t.innerHTML.replace("Swiss system", '<span style="color: red;"><i class="fa fa-sharp fa-solid fa-plus"></i> Swiss system</span>');
+            }
+        });
+
+        // Real time=> Red
+        document.querySelectorAll('.tournaments-list-result__type').forEach(t => {
+            if (/Real-time/.test(t.innerText) && /<span style="color: red;">Real-time<\/span>/.test(t.innerHTML) == false) {
+                t.innerHTML = t.innerHTML.replace("Real-time", '<span style="color: red;">Real-time</span>');
+            }
+        });
+
+        // Longer than 10 days => Red
+        document.querySelectorAll('.tournaments-list-result__timing').forEach(t => {
+            let dtime = t.innerText.match(/(\d+) day/);
+
+            if (dtime != null && dtime[1] > 10) {
+                t.style.color = 'red';
+            }
+        });
+
+        // Lien sur l'icone du jeu
+        document.querySelectorAll('.tournaments-list-result__gamebox.game_icon').forEach(i => {
+            let game = i.style.backgroundImage.slice(4, -1).match(/\/gamemedia\/(.*)?\/icon/)[1];
+            i.style.zIndex = '999';
+            i.outerHTML = '<a href="/gamepanel?game=' + game + '" class="game_link">' + i.outerHTML + '</a>';
+        });
+
+        observer_tournamentList.observe(document.querySelector('#tournament_list'), config_element);
+    }
+
+    function improveTournamentDetails() {
+        if (document.querySelector('.tournaments-mode-presentation__main') == null) {
+            return
+        }
+
+        observer_tournament.disconnect();
+
+        // Swiss system => Red
+        let t = document.querySelector('.tournaments-mode-presentation__name');
+        if (/Swiss system/.test(t.innerText) && /class\=\"fa fa-sharp fa-solid fa-plus\"/.test(t.innerHTML) == false) {
+            t.innerHTML = t.innerHTML.replace("Swiss system", '<span style="color: red;"><i class="fa fa-sharp fa-solid fa-plus"></i> Swiss system</span>');
+        }
+
+        // Highlight current player
+        document.querySelectorAll('.tournaments-registered-players__name').forEach(p => { if (p.innerText === globalUserInfos.name) { p.closest('.tournaments-registered-players__player').style.borderColor = 'red';} });
+    }
+
+    function fixCalendarLinks() {
+        if (document.querySelector('#calendarDlg > p > a') == null) {
+            return
+        }
+
+        observer_calendar.disconnect();
+
+        if (!/🎲/.test(document.querySelector('#calendarDlg > p > a').getAttribute('href'))) {
+            if (document.querySelector('#calendarDlg > p > a').attributes.length > 3) {
+                console.log('fixCalendarLinks() > if : ' + document.querySelector('#calendarDlg > p > a'));
+                let start = /href="/.exec(document.querySelector('#calendarDlg > p > a').outerHTML).index + 6;
+                let end = /" class="/.exec(document.querySelector('#calendarDlg > p > a').outerHTML).index - 1;
+                let fixedLink = /href=\"(.*)\" /.exec(document.querySelector('#calendarDlg > p > a').outerHTML)[1].replace(/ /g,'').replace(/"/g,'').replace(/output=xml/, 'src=fa609dcb7002d888c873a44e472e2cdccddc17491ff172ba64203d38d51fa29f@group.calendar.google.com&output=xml');
+
+                document.querySelector('#calendarDlg > p > a').outerHTML = document.querySelector('#calendarDlg > p > a').outerHTML.replace(document.querySelector('#calendarDlg > p > a').outerHTML.substring(start, end), fixedLink);
+                document.querySelector('#calendarDlg > p > a').setAttribute('href', document.querySelector('#calendarDlg > p > a').getAttribute('href').replace(/&text=/,'&text=🎲%20'));
+            }
+            else {
+                console.log('fixCalendarLinks() > else : ' + document.querySelector('#calendarDlg > p > a'));
+                document.querySelector('#calendarDlg > p > a').setAttribute('href', document.querySelector('#calendarDlg > p > a').getAttribute('href').replace(/&text=/,'&text=🎲%20').replace(/output=xml/, 'src=fa609dcb7002d888c873a44e472e2cdccddc17491ff172ba64203d38d51fa29f@group.calendar.google.com&output=xml'));
+            }
+        }
+    }
 
 })();
