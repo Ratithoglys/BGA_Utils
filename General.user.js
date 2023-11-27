@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.15
+// @version      0.16
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -32,6 +32,9 @@
     left: 200px;
     top: 5px;
 }
+
+.bgabutton_gray { background-color: #c9c9c9; }
+
 .ebBox {
     display: inline-flex;
     flex-direction: column;
@@ -139,10 +142,6 @@
     const observer_banner = new MutationObserver(addAlertsBanners);
     observer_banner.observe(document.body, config_childs);
 
-    /* TOURNAMENT > Calendar links - Once per load */
-    const observer_calendar = new MutationObserver(fixCalendarLinks);
-    observer_calendar.observe(document.body, config_childs);
-
     /* PLAY NOW > Tables ELO coloring - All the time */
     const observer_gametables = new MutationObserver(playnow_loop);
 
@@ -211,7 +210,13 @@
             observer_color.disconnect();
             userColor = document.querySelector('#player_boards > .current-player-board > div').id.replace('player_board_inner_','');
 
+            document.querySelector('#active_player_statusbar_icon').style.backgroundColor = 'white';
+            document.querySelector('#active_player_statusbar_icon').style.borderRadius = '5px';
             document.querySelector('#pagemaintitletext').style.backgroundColor = 'white';
+            document.querySelector('#pagemaintitletext').style.borderRadius = '5px';
+            document.querySelector('#pagemaintitletext').style.padding = '2px';
+            document.querySelector('#not_playing_help').style.backgroundColor = 'white';
+            document.querySelector('#not_playing_help').style.borderRadius = '5px';
             document.querySelector('#page-title').style.backgroundColor = '#'+userColor;
             document.querySelector('#pagemaintitle_wrap').style.backgroundColor = '#'+userColor;
         }
@@ -241,32 +246,6 @@
                 addBoxTitleLine('RankInfo', '❤️ Friendly ❤️');
                 document.querySelector('#ebBox-RankInfo > div').style.backgroundColor = 'lightgrey';
             }
-        }
-    }
-
-    /* TOURNAMENT */
-    /** Calendar links **/
-    function fixCalendarLinks() {
-        if (!/boardgamearena\.com\/tournament\?id=.*/.test(document.baseURI)) {
-            observer_calendar.disconnect();
-            return;
-        }
-
-        if (document.querySelector('#calendarDlg > p > a') == null) {
-            return
-        }
-        observer_calendar.disconnect();
-        if (document.querySelector('#calendarDlg > p > a').attributes.length > 3) {
-            let start = /href="/.exec(document.querySelector('#calendarDlg > p > a').outerHTML).index + 6;
-            let end = /" class="/.exec(document.querySelector('#calendarDlg > p > a').outerHTML).index - 1;
-            let fixedLink = /href=\"(.*)\" /.exec(document.querySelector('#calendarDlg > p > a').outerHTML)[1].replace(/ /g,'').replace(/"/g,'').replace(/output=xml/, 'src=fa609dcb7002d888c873a44e472e2cdccddc17491ff172ba64203d38d51fa29f@group.calendar.google.com&output=xml');
-
-            console.log(fixedLink);
-            document.querySelector('#calendarDlg > p > a').outerHTML = document.querySelector('#calendarDlg > p > a').outerHTML.replace(document.querySelector('#calendarDlg > p > a').outerHTML.substring(start, end), fixedLink);
-            document.querySelector('#calendarDlg > p > a').setAttribute('href', document.querySelector('#calendarDlg > p > a').getAttribute('href').replace(/&text=/,'&text=🎲%20'));
-        }
-        else {
-            document.querySelector('#calendarDlg > p > a').setAttribute('href', document.querySelector('#calendarDlg > p > a').getAttribute('href').replace(/&text=/,'&text=🎲%20').replace(/output=xml/, 'src=fa609dcb7002d888c873a44e472e2cdccddc17491ff172ba64203d38d51fa29f@group.calendar.google.com&output=xml'));
         }
     }
 
