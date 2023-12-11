@@ -5,7 +5,7 @@
 // @description  BoardGameArena: Games: Battleship
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/battleship?table=*
-// @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
+// @icon         https://x.boardgamearena.net/data/themereleases/231110-1000/img/logo/logo.png
 // @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/battleship.user.js
 // @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/battleship.user.js
 // @grant        none
