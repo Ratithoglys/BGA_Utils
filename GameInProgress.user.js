@@ -5,7 +5,7 @@
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
-// @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
+// @icon         https://x.boardgamearena.net/data/themereleases/231110-1000/img/logo/logo.png
 // @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/GameInProgress.user.js
 // @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/GameInProgress.user.js
 // @grant        none
@@ -260,7 +260,7 @@ img.emblem { background-color: white; }
                 let tId = t.getAttribute('id').replace('gametable_','');
                 let tData = globalUserInfos.table_infos.tables[tId];
 
-                if (typeof tData === 'undefined' || typeof tData.has_tournament === 'undefined') { // new tables have no data
+                if ((typeof tData === 'undefined' || typeof tData.has_tournament === 'undefined') && t.querySelector('div.gametable').style.borderColor != "red") { // new tables have no data
                     t.querySelector('div.gametable').style.borderColor = "red";
                     t.querySelector('div.gametable_upper_part_right').insertAdjacentHTML('afterend','<div style="font-size: 2em; float: right;">🆘</div>');
                     return;
