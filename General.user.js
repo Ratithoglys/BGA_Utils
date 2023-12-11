@@ -5,7 +5,7 @@
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
-// @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
+// @icon         https://x.boardgamearena.net/data/themereleases/231110-1000/img/logo/logo.png
 // @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/General.user.js
 // @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/General.user.js
 // @grant        none
@@ -13,6 +13,10 @@
 
 // liste des jeux
 //globalUserInfos.game_list.forEach({e,i}=>{if (e.name='martiandice') {console.log('martian dice: '+i)} } );
+
+// TODO : SIMPLE GAME : Indiquer le nombre de parties déjà en cours => globalUserInfos.table_infos.tables[id].game_name
+// TODO : ARENA : Indiquer le nombre de parties Arena déjà en cours
+// TODO : GAME : Intégrer la page wiki des tips FR
 
 (function() {
     'use strict';
@@ -222,7 +226,7 @@
         }
     }
 
-    /** Game type **/
+    /** Game type, tips **/
     function addAlertsBanners() {
         if (!/boardgamearena\.com\/\d+\/.*?\?table=.*/.test(document.baseURI)) {
             observer_banner.disconnect();
@@ -246,6 +250,10 @@
                 addBoxTitleLine('RankInfo', '❤️ Friendly ❤️');
                 document.querySelector('#ebBox-RankInfo > div').style.backgroundColor = 'lightgrey';
             }
+
+            // addBox('Tips');
+            // addBoxTitleLine('Tips', '<div class="bga-flag" data-country="GB"></div>&nbsp;Tips EN');
+            // addBoxTitleLine('Tips', '<div class="bga-flag" data-country="FR"></div>&nbsp;Tips FR');
         }
     }
 
