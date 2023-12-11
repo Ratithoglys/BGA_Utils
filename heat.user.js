@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: Heat
 // @namespace    https://ebumna.net/
-// @version      0.2
+// @version      0.3
 // @description  BoardGameArena: Games: Heat
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/heat?table=*
-// @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
+// @icon         https://x.boardgamearena.net/data/themereleases/231110-1000/img/logo/logo.png
 // @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/heat.user.js
 // @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/heat.user.js
 // @grant        none
@@ -53,7 +53,7 @@
     const observer_mainPanel = new MutationObserver(manageScript);
     observer_mainPanel.observe(document.body, config_stree);
 
-    const last_lap_popup = '<div id="last_lap_popup" style="display:block"><div class="roundedboxinner">🏁 This is the last lap 🏁</div></div>';
+    const last_lap_popup = '<div id="last_lap_popup" style="display:block"><div class="roundedboxinner">🏁 This is the last lap 🏁</div> <div style="font-size: 12px; font-weight: normal;">(no slipstream after cross line)</div></div>';
 
     /* Récupération de la boite du joueur */
     function manageScript() {
@@ -68,7 +68,7 @@
     /* Popup pour le dernier tour */
     function alertLap() {
         logDebug('alertLap');
-        let clap = document.querySelector('#lap-counter-5').innerText;
+        let clap = document.querySelector('.current-player-board span[id^=lap-counter-').innerText;
         let tlap = document.querySelector('.nbr-laps').innerText;
 
         if (clap == tlap && document.querySelector('#last_lap_popup') == null) {
