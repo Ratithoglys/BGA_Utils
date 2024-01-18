@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: Can't Stop
 // @namespace    https://ebumna.net/
-// @version      0.2
+// @version      0.3
 // @description  BoardGameArena: Games: Can't Stop
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/cantstop?table=*
-// @icon         http://boardgamearena.com/theme/img/favicon/android-icon-512x512
+// @icon         https://x.boardgamearena.net/data/themereleases/231110-1000/img/logo/logo.png
 // @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/cantstop.user.js
 // @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/cantstop.user.js
 // @grant        none
@@ -17,6 +17,21 @@
 (function() {
     'use strict';
 
+    document.head.appendChild(document.createElement('style')).innerHTML = `
+a#action_stop {
+    background: #c92727;
+    background: -o-linear-gradient(top,#c20b0b,#c92727);
+    border: 1px solid #b20a0a
+}
+a#action_stop:hover {
+    background: #cf4040;
+    color: #fff
+}
+a#action_stop:active {
+    background: #b20a0a;
+    border-top-color: #b20a0a
+}
+`
  	// Enable for debugging
     const DEBUG = false;
     const logDebug = (...msgs) => {
