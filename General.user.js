@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.16
+// @version      0.17
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -288,7 +288,10 @@
         document.querySelectorAll('.gamerank_apprentice, .gamerank_beginner').forEach(e => { e.style.backgroundColor = 'pink' });
         document.querySelectorAll('.how_to_play_button').forEach(e => { e.style.backgroundColor = 'lightgreen' });
 
-        document.querySelectorAll('.table_status_additional').forEach(e => {if (e.innerText == '(Friendly mode)') { e.closest('.gametable').style.backgroundColor = 'lightgrey' } })
+        document.querySelectorAll('.table_status_additional').forEach(e => {if (e.innerText == '(Friendly mode)') {
+            e.closest('.gametable').style.backgroundColor = 'lightgrey';
+            e.closest('.gametable').querySelector('div.gametable_colored_indicator').innerHTML = '<div class="friendly_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">❤️</div>';
+        } })
         if (document.querySelector('#gamelobby_inner') !== null) {
             observer_gametables.observe(document.querySelector('#gamelobby_inner') ,config_stree);
         }
