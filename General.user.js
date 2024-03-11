@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.17
+// @version      0.19
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -38,6 +38,7 @@
 }
 
 .bgabutton_gray { background-color: #c9c9c9; }
+.tableplace_freeplace { background-color: lightgray; }
 
 .ebBox {
     display: inline-flex;
@@ -102,6 +103,7 @@
     text-align: center;
     cursor: pointer;
     transition: .1s;
+
 `
 
     document.body.insertAdjacentHTML('beforeend',`<div id="ebumna-boxes"></div>`);
@@ -190,6 +192,16 @@
                 logDebug('addGamesButton() > 🚫 Table > no #refreshPlayersBtn > bga-menu-bar-items');
                 observer_menu.disconnect();
                 document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="backToTables" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/gameinprogress">🎲 Tables  </a>');
+            }
+        }
+
+        /* GAMES / MENU : Button linking to the current tables */
+        if (document.querySelector('#btLangFR') === null) {
+            if ((/boardgamearena\.com\/\d+\//.test(document.baseURI) || /boardgamearena\.com\/tutorial\?/.test(document.baseURI)) && document.querySelector('#upperrightmenu') !== null) {
+                observer_menu.disconnect();
+                let prm = new URLSearchParams(window.location.search);
+                prm.set('lang','fr');
+                document.querySelector('#upperrightmenu').insertAdjacentHTML('afterbegin', '<div class="upperrightmenu_item"><a id="langFR" class="bgabutton bgabutton_gray globalaction" href="?' + prm.toString() + '"><div class="bga-flag" data-country="FR"></div></a></div>');
             }
         }
 
@@ -295,7 +307,28 @@
         if (document.querySelector('#gamelobby_inner') !== null) {
             observer_gametables.observe(document.querySelector('#gamelobby_inner') ,config_stree);
         }
-
+        if (!/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
+            document.querySelectorAll('.playersummary').forEach(e => {
+                if (e.innerText == 'Beginner') {
+                    e.closest('.tableplace').style.backgroundColor = '#b0e0e6';
+                }
+                if (e.innerText == 'Apprentice') {
+                    e.closest('.tableplace').style.backgroundColor = '#ccebc5';
+                }
+                else if (e.innerText == 'Good player') {
+                    e.closest('.tableplace').style.backgroundColor = '#ffffe0';
+                }
+                else if (e.innerText == 'Strong player') {
+                    e.closest('.tableplace').style.backgroundColor = '#ffc0cb';
+                }
+                else if (e.innerText == 'Expert') {
+                    e.closest('.tableplace').style.backgroundColor = '#ff8080';
+                }
+                else if (e.innerText == 'Master') {
+                    e.closest('.tableplace').style.backgroundColor = '#ff0000';
+                }
+            });
+        }
     }
 
     /* BOXING UI */
