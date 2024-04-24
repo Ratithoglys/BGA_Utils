@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.19
+// @version      0.20
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -36,6 +36,9 @@
     left: 200px;
     top: 5px;
 }
+
+.game_box_wrap:has(.alpha_game) { background-color: lightcoral; }
+.game_box_wrap:has(.beta_game) { background-color: gold; }
 
 .bgabutton_gray { background-color: #c9c9c9; }
 .tableplace_freeplace { background-color: lightgray; }
@@ -195,7 +198,7 @@
             }
         }
 
-        /* GAMES / MENU : Button linking to the current tables */
+        /* GAMES / MENU : Button linking to FR version */
         if (document.querySelector('#btLangFR') === null) {
             if ((/boardgamearena\.com\/\d+\//.test(document.baseURI) || /boardgamearena\.com\/tutorial\?/.test(document.baseURI)) && document.querySelector('#upperrightmenu') !== null) {
                 observer_menu.disconnect();
