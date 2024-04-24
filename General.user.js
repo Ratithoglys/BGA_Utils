@@ -38,7 +38,9 @@
 }
 
 .game_box_wrap:has(.alpha_game) { background-color: lightcoral; }
+.alphabanner { background-color: lightcoral; }
 .game_box_wrap:has(.beta_game) { background-color: gold; }
+.betabanner { background-color: gold; }
 
 .bgabutton_gray { background-color: #c9c9c9; }
 .tableplace_freeplace { background-color: lightgray; }
