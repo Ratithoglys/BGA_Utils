@@ -15,7 +15,7 @@
     'use strict';
 
  	// Enable for debugging
-	const DEBUG = true;
+	const DEBUG = false;
 	const logDebug = (...msgs) => {
 		// eslint-disable-next-line no-console
 		if (DEBUG) console.log('BGA_GEN> ', msgs);
