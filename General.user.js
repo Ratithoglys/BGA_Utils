@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.20
+// @version      0.21
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -12,7 +12,7 @@
 // ==/UserScript==
 
 // liste des jeux
-//globalUserInfos.game_list.forEach({e,i}=>{if (e.name='martiandice') {console.log('martian dice: '+i)} } );
+//globalUserInfos.game_list.forEach(function(e, i) { if (e.name === 'martiandice') { console.log('martian dice: ' + i); } });
 
 // TODO : SIMPLE GAME : Indiquer le nombre de parties déjà en cours => globalUserInfos.table_infos.tables[id].game_name
 // TODO : ARENA : Indiquer le nombre de parties Arena déjà en cours
@@ -65,7 +65,7 @@
     border-radius: 16px;
     border: 2px solid rgb(129, 129, 129);
     background: #FFFAFA;
-    width: 200px;
+    width: 150px;
 }
 .ebBoxLayers {
     display: flex;
@@ -92,7 +92,7 @@
 .ebBoButton {
     position: relative;
     display: flex;
-    height: 48px;
+    height: 40px;
     width: 100%;
     justify-content: center;
     align-items: center;
@@ -138,6 +138,9 @@
     /* GENERAL TOPBAR UI BUTTONS - Once per load*/
     const observer_menu = new MutationObserver(addGamesButtons);
     observer_menu.observe(document.body, config_stree);
+
+    const observer_mobilemenu = new MutationObserver(addMobileGamesButtons);
+    observer_mobilemenu.observe(document.body, config_stree);
 
     const observer_popups = new MutationObserver(hideAnnoyingShit);
     observer_popups.observe(document.body, config_stree);
@@ -186,6 +189,15 @@
             document.querySelector('#site-logo').insertAdjacentHTML('afterend','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_name_displayed + '"></a></div>');
         }
 
+        /* MENU : Button linking to the personnal feed */
+        if (document.querySelector('#newsFeed') === null) {
+            if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
+                observer_menu.disconnect();
+                document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="newsFeed" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/player?section=recent">📰 Feed  </a>');
+                document.querySelector('.bga-menu-bar-items.bga-mobile').firstChild.insertAdjacentHTML('afterend','<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/player?section=recent">📰 </a>');
+            }
+        }
+
         /* GAMES / MENU : Button linking to the current tables */
         if (document.querySelector('#backToTables') === null) {
             if ((/boardgamearena\.com\/\d+\//.test(document.baseURI) || /boardgamearena\.com\/tutorial\?/.test(document.baseURI)) && document.querySelector('#upperrightmenu') !== null) {
@@ -197,6 +209,16 @@
                 logDebug('addGamesButton() > 🚫 Table > no #refreshPlayersBtn > bga-menu-bar-items');
                 observer_menu.disconnect();
                 document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="backToTables" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/gameinprogress">🎲 Tables  </a>');
+                document.querySelector('.bga-menu-bar-items.bga-mobile').firstChild.insertAdjacentHTML('afterend','<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/gameinprogress">🎲 </a>');
+            }
+        }
+
+        /* MENU : Button linking to the tournaments */
+        if (document.querySelector('#tournamentsList') === null) {
+            if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
+                observer_menu.disconnect();
+                document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="tournamentsList" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/tournamentlist">🏆 Tournois  </a>');
+                document.querySelector('.bga-menu-bar-items.bga-mobile').firstChild.insertAdjacentHTML('afterend','<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/tournamentlist">🏆 </a>');
             }
         }
 
@@ -209,15 +231,36 @@
                 document.querySelector('#upperrightmenu').insertAdjacentHTML('afterbegin', '<div class="upperrightmenu_item"><a id="langFR" class="bgabutton bgabutton_gray globalaction" href="?' + prm.toString() + '"><div class="bga-flag" data-country="FR"></div></a></div>');
             }
         }
+   }
+
+    function addMobileGamesButtons() {
+        logDebug('addMobileGamesButton()');
+
+        if (document.querySelector('.bga-menu-bar-items.bga-vertical') === null) {
+            return;
+        }
 
         /* MENU : Button linking to the tournaments */
-        if (document.querySelector('#tournamentsList') === null) {
+        if (document.querySelector('#newsFeedMobile') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
-                observer_menu.disconnect();
-                document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="tournamentsList" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/tournamentlist">🏆 Tournois  </a>');
+                document.querySelector('.bga-menu-bar-items.bga-vertical').firstChild.insertAdjacentHTML('afterend','<a id="newsFeedMobile" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/player?section=recent">📰 Feed</a>');
             }
         }
-   }
+
+        /* MENU : Button linking to the tables */
+        if (document.querySelector('#newsMobileFeed') === null) {
+            if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
+                document.querySelector('.bga-menu-bar-items.bga-vertical').firstChild.insertAdjacentHTML('afterend','<a id="tablesMobile" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/gameinprogress">🎲 Tables</a>');
+            }
+        }
+
+        /* MENU : Button linking to the tournaments */
+        if (document.querySelector('#tournamentsListMobile') === null) {
+            if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
+                document.querySelector('.bga-menu-bar-items.bga-vertical').firstChild.insertAdjacentHTML('afterend','<a id="tournamentsListMobile" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1duixkh" href="/tournamentlist">🏆 Tournois</a>');
+            }
+        }
+    }
 
     /* GAMES */
     /** Player color **/
@@ -284,8 +327,13 @@
         if (/boardgamearena\.com\/lobby/.test(document.baseURI)) {
             if (!document.querySelector('#arena-season-end').checkVisibility() && document.querySelector('#ebBox-GameTableMgr') == null) {
                 addBox('GameTableMgr');
-                addBoxBtn('GameTableMgr', 'Show <100 tables', expandBeginnerTables);
-                addBoxBtn('GameTableMgr', 'Hide <100 tables', collapseBeginnerTables);
+                addBoxBtn('GameTableMgr', 'Show 0 tables', expandBeginnerTables);
+                addBoxBtn('GameTableMgr', 'Hide 0 tables', collapseBeginnerTables);
+                addBoxBtn('GameTableMgr', 'Show 1-100 tables', expandApprenticeTables);
+                addBoxBtn('GameTableMgr', 'Hide 1-100 tables', collapseApprenticeTables);
+                addBoxBtn('GameTableMgr', 'Hide <100 tables', collapsel100Tables);
+                //addBoxBtn('GameTableMgr', 'Hide >=100 tables', collapseg100Tables);
+                addBoxBtn('GameTableMgr', 'Hide all', collapseTables);
             }
             else if (document.querySelector('#arena-season-end').checkVisibility() && document.querySelector('#ebBox-GameTableMgr') != null) {
                 document.querySelector('#ebBox-GameTableMgr').remove();
@@ -293,10 +341,25 @@
         }
     }
     function expandBeginnerTables() {
-        document.querySelectorAll('#favorite_games_list .gamerank_apprentice, #favorite_games_list .gamerank_beginner').forEach(e => { e.closest('.wannaplay').querySelector('.game_box_image_wrap .game_box').click(); });
+        document.querySelectorAll('#favorite_games_list .gamerank_beginner').forEach(e => { e.closest('.wannaplay').querySelector('.game_box_image_wrap .game_box').click(); });
     }
     function collapseBeginnerTables() {
-        document.querySelectorAll('#favorite_expanded .gamerank_apprentice, #favorite_expanded .gamerank_beginner').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
+        document.querySelectorAll('#favorite_expanded .gamerank_beginner').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
+    }
+    function expandApprenticeTables() {
+        document.querySelectorAll('#favorite_games_list .gamerank_apprentice').forEach(e => { e.closest('.wannaplay').querySelector('.game_box_image_wrap .game_box').click(); });
+    }
+    function collapseApprenticeTables() {
+        document.querySelectorAll('#favorite_expanded .gamerank_apprentice').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
+    }
+    function collapsel100Tables() {
+        document.querySelectorAll('#favorite_games_list .gamerank_beginner, #favorite_expanded .gamerank_apprentice').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
+    }
+    function collapseg100Tables() {
+        document.querySelectorAll('#favorite_expanded .gamerank_apprentice').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
+    }
+    function collapseTables() {
+        document.querySelectorAll('#favorite_expanded .expandedgame_box_wrap').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
     }
 
     /** Tables ELO **/
@@ -341,14 +404,63 @@
         document.querySelector('#ebumna-boxes').insertAdjacentHTML('beforeend','<div id="ebBox-'+bName+'" class="ebBox"><div class="ebBoxBackground"><div class="ebBoxLayers"></div></div></div>');
     }
     function addBoxTitleLine(bName, content) {
-        document.querySelector('#ebBox-'+bName+' > .ebBoxBackground > .ebBoxLayers').insertAdjacentHTML('beforeEnd', '<p class="ebBoxTitleSectionTwoTextOne ebBoxTitleSectionTitleText">'+content+'</p>');
+        document.querySelector('#ebBox-'+bName+' > .ebBoxBackground > .ebBoxLayers').insertAdjacentHTML('beforeEnd', '<p class="ebBoxTitleSectionTwoTextOne ebBoxTitleSectionTitleText">'+content+'');
     }
     function addBoxLine(bName, content) {
-        document.querySelector('#ebBox-'+bName+' > .ebBoxBackground > .ebBoxLayers').insertAdjacentHTML('beforeEnd', '<p class="ebBoxTitleSectionTwoTextOne">'+content+'</p>');
+        document.querySelector('#ebBox-'+bName+' > .ebBoxBackground > .ebBoxLayers').insertAdjacentHTML('beforeEnd', '<p class="ebBoxTitleSectionTwoTextOne">'+content+'');
     }
     function addBoxBtn(bName, content, clickCallback) {
-        document.querySelector('#ebBox-'+bName+' > .ebBoxBackground > .ebBoxLayers').insertAdjacentHTML('beforeEnd', '<div class="bgabutton bgabutton_blue">'+content+'</p>');
+        document.querySelector('#ebBox-'+bName+' > .ebBoxBackground > .ebBoxLayers').insertAdjacentHTML('beforeEnd', '<div class="bgabutton bgabutton_blue">'+content+'');
         document.querySelector('#ebBox-'+bName+' > .ebBoxBackground > .ebBoxLayers > div.bgabutton:last-child').addEventListener('click', clickCallback)
     }
     /* BOXING UI */
+
+    /* Reordonner les éléments par ELO dans : https://boardgamearena.com/player?section=prestige
+gameElements = document.querySelectorAll('.palmares_game');
+
+// Créer un tableau d'objets avec les informations de chaque jeu
+_games = [];
+gameElements.forEach(element => {
+  gameRankValue = parseInt(element.querySelector('.gamerank_value').textContent);
+  _games.push({
+    element,
+    gameRankValue
+  });
+});
+
+// Trier le tableau d'objets par ordre croissant de la valeur 'gameRankValue'
+_games.sort((a, b) => b.gameRankValue - a.gameRankValue);
+
+// Réinsérer les éléments HTML dans le DOM dans l'ordre trié
+const gameContainer = document.querySelector('.palmares_game').parentNode;
+_games.forEach(game => {
+  gameContainer.appendChild(game.element);
+});
+
+    /* Reordonner les éléments par ELO dans : https://boardgamearena.com/player?section=prestige
+gameElements = document.querySelectorAll('.palmares_game');
+
+// Créer un tableau d'objets avec les informations de chaque jeu
+_games = [];
+gameElements.forEach(element => {
+  gameName = element.querySelector('.gamename');
+  _games.push({
+    element,
+    gameName
+  });
+});
+
+// Trier le tableau d'objets par ordre croissant de la valeur 'gameRankValue'
+_games.sort((a, b) => {
+  if (a.gameName < b.gameName) return -1;
+  if (a.gameName > b.gameName) return 1;
+  return 0;
+});
+
+// Réinsérer les éléments HTML dans le DOM dans l'ordre trié
+const gameContainer = document.querySelector('.palmares_game').parentNode;
+_games.forEach(game => {
+  gameContainer.appendChild(game.element);
+});
+    */
 })();
