@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: Yathzee
 // @namespace    https://ebumna.net/
-// @version      0.1
+// @version      0.2
 // @description  BoardGameArena: Games: Yatzee
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/yatzy?table=*
@@ -14,18 +14,12 @@
 (function() {
     'use strict';
 
- 	// Enable for debugging
-	const DEBUG = false;
-	const logDebug = (...msgs) => {
-		// eslint-disable-next-line no-console
-		if (DEBUG) console.log('BGA_GEN> ', msgs);
-	};
-
     function highlightPossibleCells() {
         const cells = document.querySelectorAll('table#scoring_chart td');
         const pcells = document.querySelectorAll('td.possible_cell');
         let maxValue = 0;
         let maxCells = [];
+        let pointCells = [];
 
         // Réinitialiser les styles de toutes les cellules
         cells.forEach(cell => {
@@ -40,7 +34,12 @@
                 cell.style.color = 'blue';
 
                 const numericValue = parseInt(cellValue.substring(1));
-                if (numericValue > maxValue) {
+                const tr = cell.closest('tr');
+                const scoreTextBox = tr.querySelector('div.score_text_box');
+
+                if (scoreTextBox && scoreTextBox.innerText.includes('points')) {
+                    pointCells.push(cell);
+                } else if (numericValue > maxValue) {
                     maxValue = numericValue;
                     maxCells = [cell];
                 } else if (numericValue === maxValue) {
@@ -50,8 +49,16 @@
         });
 
         maxCells.forEach(cell => {
-            if (!cell.innerHTML.endsWith(' <i class="fa fa-check" style="color: green"></i>')) {
-                cell.innerHTML += ' <i class="fa fa-check" style="color: green"></i>';
+            // add font awesome icon only if not already present
+            if (!cell.querySelector('i.fa.fa-check')) {
+                cell.innerHTML += ' <i class="fa fa-check" style="color: #008000"></i>';
+            }
+        });
+
+        pointCells.forEach(cell => {
+            // add font awesome icon only if not already present
+            if (!cell.querySelector('i.fa.fa-diamond')) {
+                cell.innerHTML += ' <i class="fa fa-diamond" style="color: #800080"></i>';
             }
         });
     }
