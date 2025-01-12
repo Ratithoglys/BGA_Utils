@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: Battleship
 // @namespace    https://ebumna.net/
-// @version      0.2
+// @version      0.3
 // @description  BoardGameArena: Games: Battleship
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/battleship?table=*
@@ -16,13 +16,6 @@
 (function() {
     'use strict';
 
- 	// Enable for debugging
-	const DEBUG = false;
-	const logDebug = (...msgs) => {
-		// eslint-disable-next-line no-console
-		if (DEBUG) console.log('BGA_GEN> ', msgs);
-	};
-
     document.head.appendChild(document.createElement('style')).innerHTML = `
 .state_2 {
     color: navy;
@@ -33,5 +26,4 @@
     content: "X"
 }
 `
-
 })();
