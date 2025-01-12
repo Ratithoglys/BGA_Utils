@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: 6 nimmt!
 // @namespace    https://ebumna.net/
-// @version      0.3
+// @version      0.4
 // @description  BoardGameArena: Games: 6 nimmt!
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/sechsnimmt?table=*
@@ -14,37 +14,30 @@
 (function() {
     'use strict';
 
- 	// Enable for debugging
-	const DEBUG = false;
-	const logDebug = (...msgs) => {
-		// eslint-disable-next-line no-console
-		if (DEBUG) console.log('BGA_GEN> ', msgs);
-	};
-
-    const config_childs = {
-        childList: true,
-        attributes: false,
-        characterData: false,
-        subtree: false
-    };
-
-    const observer_banner = new MutationObserver(addOptionBanner);
-    observer_banner.observe(document.body, config_childs);
-
     /* Mise en évidence de la règle (normal/pro) */
     function addOptionBanner() {
-        if (document.querySelector('#pagemaintitletext') != null) {
-            observer_banner.disconnect();
 
-            let game_mode = document.querySelector('#footer_option_value_101').innerText;
+        const gameModeElement = document.querySelector('#footer_option_value_101').innerText;
 
-            if (/Professional/.test(game_mode)) {
-                document.querySelector('#active_player_statusbar').insertAdjacentHTML('beforebegin','⬅️➡️');
-            }
-            else {
-                document.querySelector('#active_player_statusbar').insertAdjacentHTML('beforebegin','➡️');
-            }
+        if (!gameModeElement) {
+            return; // Le mode de jeu n'est pas encore disponible
+        }
+
+        if (/Professional/.test(gameModeElement)) {
+            document.querySelector('#active_player_statusbar').insertAdjacentHTML('beforebegin','➡️🃏🃏🃏⬅️');
+        }
+        else {
+            document.querySelector('#active_player_statusbar').insertAdjacentHTML('beforebegin','🃏🃏🃏⬅️');
         }
     }
+
+    // Attendre que l'élément "page_title" soit présent avant de démarrer le script
+    const waitForPageTitle = setInterval(() => {
+        const pageTitle = document.querySelector('#pagemaintitletext');
+        if (pageTitle) {
+            clearInterval(waitForPageTitle);
+            addOptionBanner();
+        }
+    }, 500);
 
 })();
