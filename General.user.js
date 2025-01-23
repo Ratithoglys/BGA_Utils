@@ -407,7 +407,12 @@
                 addBoxBtn('GameTableMgr', 'Show 1-100 tables', expandApprenticeTables);
                 addBoxBtn('GameTableMgr', 'Hide 1-100 tables', collapseApprenticeTables);
                 addBoxBtn('GameTableMgr', 'Hide <100 tables', collapsel100Tables);
-                //addBoxBtn('GameTableMgr', 'Hide >=100 tables', collapseg100Tables);
+                addBoxBtn('GameTableMgr', 'Hide >=100 tables', collapseg100Tables);
+                addBoxBtn('GameTableMgr', 'Hide >=100 tables', collapseg100Tables);
+                addBoxBtn('GameTableMgr', 'Show Alpha tables', expandAlphaTables);
+                addBoxBtn('GameTableMgr', 'Hide Alpha tables', collapseAlphaTables);
+                addBoxBtn('GameTableMgr', 'Show Beta tables', expandBetaTables);
+                addBoxBtn('GameTableMgr', 'Hide Beta tables', collapseBetaTables);
                 addBoxBtn('GameTableMgr', 'Hide all', collapseTables);
             }
             else if (document.querySelector('#arena-season-end').checkVisibility() && document.querySelector('#ebBox-GameTableMgr') != null) {
@@ -483,6 +488,18 @@
     }
     function collapseg100Tables() {
         document.querySelectorAll('#favorite_expanded .gamerank_apprentice').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
+    }
+    function expandAlphaTables() {
+        document.querySelectorAll('#favorite_games_list .alpha_game').forEach(e => { e.closest('.wannaplay').querySelector('.game_box_image_wrap .game_box').click(); });
+    }
+    function collapseAlphaTables() {
+        document.querySelectorAll('#favorite_expanded .alpha_game').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
+    }
+    function expandBetaTables() {
+        document.querySelectorAll('#favorite_games_list .beta_game').forEach(e => { e.closest('.wannaplay').querySelector('.game_box_image_wrap .game_box').click(); });
+    }
+    function collapseBetaTables() {
+        document.querySelectorAll('#favorite_expanded .beta_game').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
     }
     function collapseTables() {
         document.querySelectorAll('#favorite_expanded .expandedgame_box_wrap').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
