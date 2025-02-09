@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: 6 nimmt!
 // @namespace    https://ebumna.net/
-// @version      0.4
+// @version      0.5
 // @description  BoardGameArena: Games: 6 nimmt!
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/sechsnimmt?table=*
@@ -18,16 +18,21 @@
     function addOptionBanner() {
 
         const gameModeElement = document.querySelector('#footer_option_value_101').innerText;
+        const proBannerElement = document.querySelector('div#game_play_area div.whiteblock');
 
         if (!gameModeElement) {
             return; // Le mode de jeu n'est pas encore disponible
         }
 
-        if (/Professional/.test(gameModeElement)) {
+        if (/Enabled/.test(gameModeElement)) {
             document.querySelector('#active_player_statusbar').insertAdjacentHTML('beforebegin','➡️🃏🃏🃏⬅️');
         }
         else {
             document.querySelector('#active_player_statusbar').insertAdjacentHTML('beforebegin','🃏🃏🃏⬅️');
+        }
+
+        if (proBannerElement && proBannerElement.innerText === 'Professional variant') {
+            proBannerElement.style.backgroundColor = 'yellow';
         }
     }
 
