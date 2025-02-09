@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.22.1
+// @version      0.23
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -406,14 +406,12 @@
                 addBoxBtn('GameTableMgr', 'Hide 0 tables', collapseBeginnerTables);
                 addBoxBtn('GameTableMgr', 'Show 1-100 tables', expandApprenticeTables);
                 addBoxBtn('GameTableMgr', 'Hide 1-100 tables', collapseApprenticeTables);
-                addBoxBtn('GameTableMgr', 'Hide <100 tables', collapsel100Tables);
-                addBoxBtn('GameTableMgr', 'Hide >=100 tables', collapseg100Tables);
-                addBoxBtn('GameTableMgr', 'Hide >=100 tables', collapseg100Tables);
                 addBoxBtn('GameTableMgr', 'Show Alpha tables', expandAlphaTables);
                 addBoxBtn('GameTableMgr', 'Hide Alpha tables', collapseAlphaTables);
                 addBoxBtn('GameTableMgr', 'Show Beta tables', expandBetaTables);
                 addBoxBtn('GameTableMgr', 'Hide Beta tables', collapseBetaTables);
                 addBoxBtn('GameTableMgr', 'Hide all', collapseTables);
+                addBoxBtn('GameTableMgr', 'Order ELO', sortByElo);
             }
             else if (document.querySelector('#arena-season-end').checkVisibility() && document.querySelector('#ebBox-GameTableMgr') != null) {
                 if (sortByEloOption) {
@@ -513,12 +511,19 @@
             const gameEloElement = element.querySelector('.myelo_value');
             if (gameEloElement) {
                 const gameElo = parseInt(gameEloElement.textContent, 10);
-                games.push({ element, gameElo });
+                // Remplacer NaN par -9999
+                const eloValue = isNaN(gameElo) ? -9999 : gameElo;
+                games.push({ element, eloValue });
+            } else {
+                // Si l'élément .myelo_value n'existe pas, on lui attribue -9999
+                games.push({ element, eloValue: -9999 });
             }
         });
 
-        games.sort((a, b) => b.gameElo - a.gameElo);
+        // Trier en utilisant eloValue
+        games.sort((a, b) => b.eloValue - a.eloValue);
 
+        // Réorganiser les éléments dans le conteneur
         games.forEach(game => {
             container.appendChild(game.element);
         });
