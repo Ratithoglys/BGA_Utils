@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.23.1
+// @version      0.23.3
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -24,8 +24,7 @@
  	// Enable for debugging
 	const DEBUG = false;
 	const logDebug = (...msgs) => {
-		// eslint-disable-next-line no-console
-		if (DEBUG) console.log('BGA_GEN> ', msgs);
+		if (DEBUG) console.debug('BGA_GEN> ', msgs);
 	};
 
     var userColor = null;
@@ -189,12 +188,12 @@
         logDebug('addGamesButton()');
 
         /* GAMES : Button linking to the game page */
-        if (/boardgamearena\.com\/\d+\//.test(document.baseURI) && document.querySelector('#game-logo') == null) {
-            if (typeof gameui === 'undefined') {
+        if (/boardgamearena\.com\/\d+\//.test(document.baseURI) && document.querySelector('#game-logo') === null) {
+            if (typeof gameui === 'undefined' || gameui.game_name == "" || gameui.game_display_name == "") {
                 return;
             }
 
-            document.querySelector('#site-logo').insertAdjacentHTML('afterend','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_name_displayed + '"></a></div>');
+            document.querySelector('#site-logo').insertAdjacentHTML('afterend','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_display_name + '"></a></div>');
         }
 
         /* MENU : Button linking to the notifications */
