@@ -31,11 +31,7 @@
 
     document.head.appendChild(document.createElement('style')).innerHTML = `
 #pagemaintitletext { color: black; }
-#game-logo {
-    position: absolute;
-    left: 200px;
-    top: 5px;
-}
+#game-logo { top: 5px; margin: 0 6px; }
 
 .game_box_wrap:has(.alpha_game) { background-color: lightcoral; }
 .alphabanner { background-color: lightcoral; }
@@ -188,12 +184,12 @@
         logDebug('addGamesButton()');
 
         /* GAMES : Button linking to the game page */
-        if (/boardgamearena\.com\/\d+\//.test(document.baseURI) && document.querySelector('#game-logo') === null) {
+        if (/boardgamearena\.com\/\d+\//.test(document.baseURI) && document.querySelector('#game-logo') == null) {
             if (typeof gameui === 'undefined' || gameui.game_name == "" || gameui.game_display_name == "") {
                 return;
             }
 
-            document.querySelector('#site-logo').insertAdjacentHTML('afterend','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_display_name + '"></a></div>');
+            document.querySelector('#site-logo').insertAdjacentHTML('beforebegin','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_display_name + '"></a></div>');
         }
 
         /* MENU : Button linking to the notifications */
