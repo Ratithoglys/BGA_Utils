@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: GamesInProgress & Tournaments
 // @namespace    https://ebumna.net/
-// @version      0.21
+// @version      0.22
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -15,7 +15,7 @@
     'use strict';
 
  	// Enable for debugging
-	const DEBUG = false;
+	const DEBUG = true;
 	const logDebug = (...msgs) => {
 		// eslint-disable-next-line no-console
 		if (DEBUG) console.log('BGA_GIP> ', msgs);
@@ -559,7 +559,6 @@ img.emblem { background-color: white; }
         });
     }
 
-
     function handleFilterClick(e, param) {
         const button = e.target;
         const buttonState = button.getAttribute('data-state');
@@ -577,7 +576,6 @@ img.emblem { background-color: white; }
             resetFilterTables();
         }
     }
-
 
     function resetFilterButtons(currentButton) {
         const filterButtons = document.querySelectorAll('.filter-button');
@@ -638,23 +636,20 @@ img.emblem { background-color: white; }
             }
         });
 
-        // Swiss system => Orange
-        // Groups => Orange
-        // Round robin => Red
         document.querySelectorAll('.tournaments-list-result__type').forEach(t => {
+            // Round robin => Red
             if (/Round robin/.test(t.innerText) && /<span style="color: red; font-weight:bold;"><i class="fa fa-users"><\/i> Round robin<\/span>/.test(t.innerHTML) == false) {
                 t.innerHTML = t.innerHTML.replace("Round robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round robin</span>');
             }
-            else if (/Swiss system/.test(t.innerText) && /class\=\"fa fa-sharp fa-solid fa-plus-square\"/.test(t.innerHTML) == false) {
-                t.innerHTML = t.innerHTML.replace("Swiss system", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss system</span>');
+            // Swiss system => Orange
+            else if (/Swiss System/.test(t.innerText) && /class\=\"fa fa-sharp fa-solid fa-plus-square\"/.test(t.innerHTML) == false) {
+                t.innerHTML = t.innerHTML.replace("Swiss System", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss System</span>');
             }
+            // Groups => Orange
             else if (/Groups Stage/.test(t.innerText) && /class\=\"fa fa-folder-open\"/.test(t.innerHTML) == false) {
                 t.innerHTML = t.innerHTML.replace("Groups Stage", '<span style="color: orange; font-weight:bold;"><i class="fa fa-folder-open"></i> Groups Stage</span>');
             }
-        });
-
-        // Real time => Red
-        document.querySelectorAll('.tournaments-list-result__type').forEach(t => {
+            // Real time => Red
             if (/Real-time/.test(t.innerText) && /<span style="color: red;"><i class="fa fa-hourglass-half"><\/i> Real-time<\/span>/.test(t.innerHTML) == false) {
                 t.innerHTML = t.innerHTML.replace("Real-time", '<span style="color: red; font-weight:bold;"><i class="fa fa-hourglass-half"></i> Real-time</span>');
             }
@@ -698,8 +693,8 @@ img.emblem { background-color: white; }
             else if (/Real-time/.test(t.innerText) && /<span style="color: red;"><i class="fa fa-hourglass-half"><\/i> Real-time<\/span>/.test(t.innerHTML) == false) {
                 t.innerHTML = t.innerHTML.replace("Real-time", '<span style="color: red; font-weight:bold;"><i class="fa fa-hourglass-half"></i> Real-time</span>');
             }
-            else if (/Swiss system/.test(t.innerText) && /class\=\"fa fa-sharp fa-solid fa-plus-square\"/.test(t.innerHTML) == false) {
-                t.innerHTML = t.innerHTML.replace("Swiss system", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss system</span>');
+            else if (/Swiss System/.test(t.innerText) && /class\=\"fa fa-sharp fa-solid fa-plus-square\"/.test(t.innerHTML) == false) {
+                t.innerHTML = t.innerHTML.replace("Swiss System", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss System</span>');
             }
             else if (/Groups Stage/.test(t.innerText) && /class\=\"fa fa-folder-open\"/.test(t.innerHTML) == false) {
                 t.innerHTML = t.innerHTML.replace("Groups Stage", '<span style="color: orange; font-weight:bold;"><i class="fa fa-folder-open"></i> Groups Stage</span>');
