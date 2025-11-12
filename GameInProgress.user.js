@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: GamesInProgress & Tournaments
 // @namespace    https://ebumna.net/
-// @version      0.20
+// @version      0.21
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -186,9 +186,9 @@ img.emblem { background-color: white; }
     const oRoot = document.body;
     const oMainPanel = document.querySelector('#main-content');
 
-    const observer_gamesPanel = new MutationObserver(getGames);
-    const observer_players = new MutationObserver(getPlayers);
-    const observer_filters = new MutationObserver(addFilters);
+//     const observer_gamesPanel = new MutationObserver(getGames);
+//     const observer_players = new MutationObserver(getPlayers);
+//     const observer_filters = new MutationObserver(addFilters);
 
     /* TOURNAMENT LIST */
     const observer_tournamentList = new MutationObserver(improveTournamentsList);
@@ -204,7 +204,7 @@ img.emblem { background-color: white; }
     /* Lancement de l'observeur observer_gamesPanel */
     function manageScript() {
         if (/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
-            observer_gamesPanel.observe(oRoot, config_stree); // check for current tables list
+            //observer_gamesPanel.observe(oRoot, config_stree); // check for current tables list
         }
         else if (/boardgamearena\.com\/tournamentlist\?/.test(document.baseURI) && document.querySelector('#tournament_list') != null) {
             observer_tournamentList.observe(document.querySelector('#tournament_list'), config_element);
@@ -217,11 +217,12 @@ img.emblem { background-color: white; }
             observer_playergames.observe(oMainPanel, config_stree);
         }
         else {
-            observer_gamesPanel.disconnect();
-            observer_players.disconnect();
+            //observer_gamesPanel.disconnect();
+            //observer_players.disconnect();
             observer_tournamentList.disconnect();
             observer_tournament.disconnect();
             observer_calendar.disconnect();
+            observer_playergames.disconnect();
         }
     }
 
@@ -230,22 +231,24 @@ img.emblem { background-color: white; }
      -> otherGamesBtn
      -> addFilters
      */
+/*
     function getGames() {
         logDebug('getGames()');
-        user = globalUserInfos.name;
-        userId = globalUserInfos.id;
-        friends = [];
-        globalUserInfos.friends_info.friends.toSorted().forEach(f => { friends.push(f.name) });
-
+ 
         if (typeof globalUserInfos === 'undefined') {
             return;
         }
         else {
+            user = globalUserInfos.name;
+            userId = globalUserInfos.id;
+            friends = [];
+            globalUserInfos.friends_info.friends.toSorted().forEach(f => { friends.push(f.name) });
+
             observer_gamesPanel.disconnect();
-            getTables();
-            getPlayers();
-            otherGamesBtn();
-            removeJunk();
+            //getTables();
+            //getPlayers();
+            //otherGamesBtn();
+            //removeJunk();
 
             if (document.querySelector('#gametables_yours') !== null) {
                 observer_players.observe(document.querySelector('#gametables_yours'), config_streefull);
@@ -253,10 +256,11 @@ img.emblem { background-color: white; }
             }
         }
     }
-
+ */
     /* Colorier les tables */
+/*
     function getTables() {
-        if (!/boardgamearena\.com\/gameinprogress/.test(document.baseURI) && !/boardgamearena\.com\/.*\?table=*/.test(document.baseURI) && !/boardgamearena\.com\/tournament\?id=*/.test(document.baseURI)) {
+        if (!/boardgamearena\.com\/gameinprogress/.test(document.baseURI) && !/boardgamearena\.com\/.*\?table=* /.test(document.baseURI) && !/boardgamearena\.com\/tournament\?id=* /.test(document.baseURI)) {
             return;
         }
 
@@ -299,12 +303,13 @@ img.emblem { background-color: white; }
             }
         });
 
-        updateTableCount();
+        //updateTableCount();
     }
-
+ */
     /* Colorier les joueurs */
+/*
     function getPlayers() {
-        if (!/boardgamearena\.com\/gameinprogress/.test(document.baseURI) && !/boardgamearena\.com\/.*\?table=*/.test(document.baseURI) && !/boardgamearena\.com\/tournament\?id=*/.test(document.baseURI)) {
+        if (!/boardgamearena\.com\/gameinprogress/.test(document.baseURI) && !/boardgamearena\.com\/.*\?table=* /.test(document.baseURI) && !/boardgamearena\.com\/tournament\?id=* /.test(document.baseURI)) {
             return;
         }
 
@@ -348,8 +353,9 @@ img.emblem { background-color: white; }
             observer_players.observe(document.querySelector('#gametables_yours'), config_streefull);
         }
     }
-
+ */
     /* Compter les tables en attente de jeu */
+/*
     function updateTableCount() {
         if (/boardgamearena\.com\/gameinprogress\?player/.test(document.baseURI) || document.querySelector('#games_in_progress h3') == null) {
             return;
@@ -363,8 +369,9 @@ img.emblem { background-color: white; }
         }
         document.querySelector('#tablesCount').innerText = ' (' + active + '/' + cnt + ')';
     }
-
+ */
     /* Supprimer les éléments inutiles */
+/*
     function removeJunk() {
         if (!/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
             return;
@@ -374,8 +381,9 @@ img.emblem { background-color: white; }
             document.querySelector('#section-tournament').nextElementSibling.nextElementSibling.remove();
         }
     }
-
+ */
     //--- FILTER CONTENT
+/*
     function getGameList() {
         const uniqueValues = [];
         document.querySelectorAll('span.gamename').forEach((element) => {
@@ -390,6 +398,7 @@ img.emblem { background-color: white; }
     }
 
     function addFilters() {
+        logDebug('addFilters()');
         if (!/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
             return;
         }
@@ -474,8 +483,10 @@ img.emblem { background-color: white; }
             bar.append(button);
         });
     }
+ */
 
     /* FILTER LOGIC */
+/*
     function handleFilterTables(param, context) {
         if (context == 'filter_games') {
             handleFilterTablesForGame(param);
@@ -548,6 +559,7 @@ img.emblem { background-color: white; }
         });
     }
 
+
     function handleFilterClick(e, param) {
         const button = e.target;
         const buttonState = button.getAttribute('data-state');
@@ -566,6 +578,7 @@ img.emblem { background-color: white; }
         }
     }
 
+
     function resetFilterButtons(currentButton) {
         const filterButtons = document.querySelectorAll('.filter-button');
         [...filterButtons].map(button => {
@@ -582,8 +595,10 @@ img.emblem { background-color: white; }
             t.style.display = null;
         });
     }
+ */
 
     //--- OTHER GAMES (text table underneath)
+/*
     function otherGamesBtn() {
         if (!/boardgamearena\.com\/gameinprogress/.test(document.baseURI)) {
             return;
@@ -607,6 +622,7 @@ img.emblem { background-color: white; }
         let e = document.querySelector('#game_in_progress_stats')
         if (e.style.display == 'none') { e.style.display = null; } else { e.style.display = 'none'; };
     }
+ */
 
     /* TOURNAMMENTS */
     function improveTournamentsList() {
@@ -676,8 +692,8 @@ img.emblem { background-color: white; }
         observer_tournament.disconnect();
 
         document.querySelectorAll('.tournaments-mode-presentation__name').forEach(t => {
-            if (/Round robin/.test(t.innerText) && /<span style="color: red; font-weight:bold;"><i class="fa fa-users"><\/i> Round robin<\/span>/.test(t.innerHTML) == false) {
-                t.innerHTML = t.innerHTML.replace("Round robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round robin</span>');
+            if (/Round Robin/.test(t.innerText) && /<span style="color: red; font-weight:bold;"><i class="fa fa-users"><\/i> Round Robin<\/span>/.test(t.innerHTML) == false) {
+                t.innerHTML = t.innerHTML.replace("Round Robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round Robin</span>');
             }
             else if (/Real-time/.test(t.innerText) && /<span style="color: red;"><i class="fa fa-hourglass-half"><\/i> Real-time<\/span>/.test(t.innerHTML) == false) {
                 t.innerHTML = t.innerHTML.replace("Real-time", '<span style="color: red; font-weight:bold;"><i class="fa fa-hourglass-half"></i> Real-time</span>');
@@ -791,10 +807,61 @@ img.emblem { background-color: white; }
     }
 
     /* PLAYER */
-    function checkPlayerGameForUnknown() {
+    /* Ajoute un fond aux jeux non connus actuellement sur la page https://boardgamearena.com/player?id=XXX&section=prestige */
+/*
+    function checkPlayerGameForUnknown_old() {
         if (document.querySelector('#pagesection_prestige') != null) {
             observer_playergames.disconnect();
-            document.querySelectorAll('.palmares_game').forEach( g => { if (globalUserInfos.game_list.find( gi => gi.id == g.querySelector('.bga-link').getAttribute('href').match(/&game=([0-9]+)/)[1]).player_rank == 0) { g.style.backgroundColor = '#ffc0cb' } } );
+            document.querySelectorAll('.palmares_game').forEach(
+                g => {
+                    if (globalUserInfos.game_list.find( gi => gi.id == g.querySelector('.bga-link').getAttribute('href').match(/&game=([0-9]+)/)[1]).player_rank == 0) {
+                        g.style.backgroundColor = '#ffc0cb';
+                    }
+                }
+            );
         }
+    }
+ */
+    function checkPlayerGameForUnknown() {
+        if (document.querySelector('#pagesection_prestige') == null) {
+            return;
+        }
+
+        observer_playergames.disconnect(); // Arrêter l'observateur pour éviter les boucles infinies pendant la modification
+
+        // Vérifier que les informations globales du joueur sont bien chargées
+        if (!window.globalUserInfos || !globalUserInfos.game_list) {
+            console.log('BGA_GIP> globalUserInfos non disponible, nouvelle tentative dans 1s.');
+            // Si les données ne sont pas prêtes, réessayer après un court délai
+            setTimeout(checkPlayerGameForUnknown, 1000);
+            return;
+        }
+
+        // 1. Créer une Map pour un accès ultra-rapide aux classements des jeux.
+        // Clé: ID du jeu (en chaîne de caractères), Valeur: classement du joueur.
+        const gameRanks = new Map();
+        globalUserInfos.game_list.forEach(game => {
+            // S'assurer que l'ID est une chaîne de caractères pour une comparaison fiable
+            gameRanks.set(game.id.toString(), game.player_rank);
+        });
+
+        // 2. Parcourir tous les jeux affichés sur la page de prestige
+        document.querySelectorAll('.palmares_game').forEach(gameElement => {
+            const link = gameElement.querySelector('.bga-link');
+            if (!link) return; // Sécurité si le lien n'est pas trouvé
+
+            const href = link.getAttribute('href');
+            const match = href.match(/&game=([0-9]+)/);
+            if (!match) return; // Sécurité si l'ID du jeu n'est pas trouvé
+
+            const gameId = match[1];
+
+            // 3. Vérifier si le jeu est "non connu"
+            // Condition : Soit le jeu n'est pas du tout dans la Map (cas 2),
+            // soit il y est mais son classement est 0 (cas 1).
+            if (!gameRanks.has(gameId) || gameRanks.get(gameId) == 0) {
+                gameElement.style.backgroundColor = '#ffc0cb'; // Appliquer le fond rose
+            }
+        });
     }
 })();
