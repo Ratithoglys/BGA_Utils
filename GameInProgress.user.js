@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: GamesInProgress & Tournaments
 // @namespace    https://ebumna.net/
-// @version      0.22
+// @version      0.23
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -234,7 +234,7 @@ img.emblem { background-color: white; }
 /*
     function getGames() {
         logDebug('getGames()');
- 
+
         if (typeof globalUserInfos === 'undefined') {
             return;
         }
@@ -624,157 +624,188 @@ img.emblem { background-color: white; }
 
     /* TOURNAMMENTS */
     function improveTournamentsList() {
-        observer_tournamentList.disconnect();
+        observer_tournamentList.disconnect(); // On arrête l'observation pendant qu'on modifie
 
-        // More than 3 players => Red
-        document.querySelectorAll('.tournaments-list-result__gameplayers').forEach(t => {
-            let dPlayers = t.innerText.match(/(\d+)/);
+        const tournamentRows = document.querySelectorAll('#tournament_list .tournaments-list-result');
 
-            if (dPlayers != null && dPlayers[1] > 3) {
-                t.style.color = 'red';
-                t.style.fontWeight = 'bold';
+        // On parcourt chaque ligne de tournoi UNE SEULE FOIS
+        tournamentRows.forEach(row => {
+            // Si la ligne a déjà été modifiée par le script, on passe à la suivante
+            if (row.dataset.bgaEnhanced) {
+                return;
             }
+
+            // --- 1. Nombre de joueurs ---
+            const playersCell = row.querySelector('.tournaments-list-result__gameplayers');
+            if (playersCell) {
+                const dPlayers = playersCell.innerText.match(/(\d+)/);
+                if (dPlayers && dPlayers[1] > 3) {
+                    playersCell.style.color = 'red';
+                    playersCell.style.fontWeight = 'bold';
+                }
+            }
+
+            // --- 2. Type et vitesse ---
+            const typeCell = row.querySelector('.tournaments-list-result__type');
+            if (typeCell) {
+                if (/Round robin/.test(typeCell.innerText)) {
+                    typeCell.innerHTML = typeCell.innerHTML.replace("Round robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round robin</span>');
+                } else if (/Swiss System/.test(typeCell.innerText)) {
+                    typeCell.innerHTML = typeCell.innerHTML.replace("Swiss System", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss System</span>');
+                } else if (/Groups Stage/.test(typeCell.innerText)) {
+                    typeCell.innerHTML = typeCell.innerHTML.replace("Groups Stage", '<span style="color: orange; font-weight:bold;"><i class="fa fa-folder-open"></i> Groups Stage</span>');
+                }
+                if (/Real-time/.test(typeCell.innerText)) {
+                    typeCell.innerHTML = typeCell.innerHTML.replace("Real-time", '<span style="color: red; font-weight:bold;"><i class="fa fa-hourglass-half"></i> Real-time</span>');
+                }
+            }
+
+            // --- 3. Durée ---
+            const timingCell = row.querySelector('.tournaments-list-result__timing');
+            if (timingCell) {
+                const dtime = timingCell.innerText.match(/(\d+) day/);
+                if (dtime) {
+                    if (dtime[1] > 10 || dtime[1] < 2) {
+                        timingCell.style.color = 'red';
+                        timingCell.style.fontWeight = 'bold';
+                    } else if (dtime[1] >= 5) {
+                        timingCell.style.color = 'orange';
+                    }
+                }
+            }
+
+            // --- 4. Lien sur l'icône du jeu ---
+            const icon = row.querySelector('.tournaments-list-result__gamebox.game_icon');
+            // On vérifie que le lien n'existe pas déjà pour éviter les erreurs
+            if (icon && !icon.closest('a.game_link')) {
+                const game = icon.style.backgroundImage.slice(4, -1).match(/\/gamemedia\/(.*)?\/icon/)[1];
+                icon.style.zIndex = '999';
+                icon.outerHTML = `<a href="/gamepanel?game=${game}" class="game_link">${icon.outerHTML}</a>`;
+            }
+
+            // On marque la ligne comme traitée pour ne pas le refaire
+            row.dataset.bgaEnhanced = 'true';
         });
 
-        document.querySelectorAll('.tournaments-list-result__type').forEach(t => {
-            // Round robin => Red
-            if (/Round robin/.test(t.innerText) && /<span style="color: red; font-weight:bold;"><i class="fa fa-users"><\/i> Round robin<\/span>/.test(t.innerHTML) == false) {
-                t.innerHTML = t.innerHTML.replace("Round robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round robin</span>');
-            }
-            // Swiss system => Orange
-            else if (/Swiss System/.test(t.innerText) && /class\=\"fa fa-sharp fa-solid fa-plus-square\"/.test(t.innerHTML) == false) {
-                t.innerHTML = t.innerHTML.replace("Swiss System", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss System</span>');
-            }
-            // Groups => Orange
-            else if (/Groups Stage/.test(t.innerText) && /class\=\"fa fa-folder-open\"/.test(t.innerHTML) == false) {
-                t.innerHTML = t.innerHTML.replace("Groups Stage", '<span style="color: orange; font-weight:bold;"><i class="fa fa-folder-open"></i> Groups Stage</span>');
-            }
-            // Real time => Red
-            if (/Real-time/.test(t.innerText) && /<span style="color: red;"><i class="fa fa-hourglass-half"><\/i> Real-time<\/span>/.test(t.innerHTML) == false) {
-                t.innerHTML = t.innerHTML.replace("Real-time", '<span style="color: red; font-weight:bold;"><i class="fa fa-hourglass-half"></i> Real-time</span>');
-            }
-        });
-
-        // Longer than 10 days => Red
-        // Shorter than 2 days => Red
-        document.querySelectorAll('.tournaments-list-result__timing').forEach(t => {
-            let dtime = t.innerText.match(/(\d+) day/);
-
-            if (dtime != null && (dtime[1] > 10 || dtime[1] < 2)) {
-                t.style.color = 'red';
-                t.style.fontWeight = 'bold';
-            }
-            else if (dtime != null && dtime[1] >= 5) {
-                t.style.color = 'orange';
-            }
-        });
-
-        // Lien sur l'icone du jeu
-        document.querySelectorAll('.tournaments-list-result__gamebox.game_icon').forEach(i => {
-            let game = i.style.backgroundImage.slice(4, -1).match(/\/gamemedia\/(.*)?\/icon/)[1];
-            i.style.zIndex = '999';
-            i.outerHTML = '<a href="/gamepanel?game=' + game + '" class="game_link">' + i.outerHTML + '</a>';
-        });
-
-        observer_tournamentList.observe(document.querySelector('#tournament_list'), config_element);
+        // On réactive l'observateur si nécessaire (bien que la nouvelle gestion de page le rende moins utile ici)
+        const tournamentListElement = document.querySelector('#tournament_list');
+        if (tournamentListElement) {
+            observer_tournamentList.observe(tournamentListElement, config_element);
+        }
     }
 
     function improveTournamentDetails() {
-        if (document.querySelector('.tournaments-mode-presentation__main') == null) {
-            return
+        const mainPresentation = document.querySelector('.tournaments-mode-presentation__main');
+
+        if (!mainPresentation || mainPresentation.dataset.bgaEnhanced) {
+            return;
         }
 
         observer_tournament.disconnect();
+        logDebug("Amélioration des détails du tournoi...");
 
+        // --- 1. Titres des sections ---
         document.querySelectorAll('.tournaments-mode-presentation__name').forEach(t => {
-            if (/Round Robin/.test(t.innerText) && /<span style="color: red; font-weight:bold;"><i class="fa fa-users"><\/i> Round Robin<\/span>/.test(t.innerHTML) == false) {
+            if (/Round Robin/.test(t.innerText)) {
                 t.innerHTML = t.innerHTML.replace("Round Robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round Robin</span>');
-            }
-            else if (/Real-time/.test(t.innerText) && /<span style="color: red;"><i class="fa fa-hourglass-half"><\/i> Real-time<\/span>/.test(t.innerHTML) == false) {
+            } else if (/Real-time/.test(t.innerText)) {
                 t.innerHTML = t.innerHTML.replace("Real-time", '<span style="color: red; font-weight:bold;"><i class="fa fa-hourglass-half"></i> Real-time</span>');
-            }
-            else if (/Swiss System/.test(t.innerText) && /class\=\"fa fa-sharp fa-solid fa-plus-square\"/.test(t.innerHTML) == false) {
+            } else if (/Swiss System/.test(t.innerText)) {
                 t.innerHTML = t.innerHTML.replace("Swiss System", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss System</span>');
-            }
-            else if (/Groups Stage/.test(t.innerText) && /class\=\"fa fa-folder-open\"/.test(t.innerHTML) == false) {
+            } else if (/Groups Stage/.test(t.innerText)) {
                 t.innerHTML = t.innerHTML.replace("Groups Stage", '<span style="color: orange; font-weight:bold;"><i class="fa fa-folder-open"></i> Groups Stage</span>');
             }
         });
-        document.querySelectorAll('.tournaments-mode-presentation__main .row-data').forEach(t => {
-            let tLabel = t.querySelector('.row-label');
-            let tValue = t.querySelector('.row-value');
 
-            // More than 3 players => Red
-            if (/Number of players.*/.test(tLabel.innerText)) {
-                let dPlayers = tValue.innerText.match(/(\d+)/);
+        // --- 2. Détails du tournoi (lignes de données) ---
+        document.querySelectorAll('.tournaments-mode-presentation__main .row-data').forEach(row => {
+            const tLabel = row.querySelector('.row-label');
+            const tValue = row.querySelector('.row-value');
 
-                if (dPlayers != null && dPlayers[1] > 3) {
-                    tValue.style.color = 'red';
-                    tValue.style.fontWeight = 'bold';
-                }
-            }
+            if (!tLabel || !tValue) return;
 
-            // Swiss system => Orange
-            // Groups => Orange
-            // Round robin => Red
-            if (/Mode of stage.*/.test(tLabel.innerText)) {
-                if (/Round robin/.test(tValue.innerText) && /<span style="color: red; font-weight:bold;"><i class="fa fa-users"><\/i> Round robin<\/span>/.test(tValue.innerHTML) == false) {
-                    tValue.innerHTML = tValue.innerHTML.replace("Round robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round robin</span>');
-                }
-                else if (/Swiss system/.test(tValue.innerText) && /class\=\"fa fa-sharp fa-solid fa-plus-square\"/.test(tValue.innerHTML) == false) {
-                    tValue.innerHTML = tValue.innerHTML.replace("Swiss system", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss system</span>');
-                }
-            }
-
-            // Real time => Red
-            if (/Game speed/.test(tLabel.innerText)) {
-                if (/Real-time/.test(tValue.innerText) && /<span style="color: red; font-weight:bold;"><i class="fa fa-hourglass-half"><\/i> Real-time<\/span>/.test(tValue.innerHTML) == false) {
-                    tValue.innerHTML = tValue.innerHTML.replace("Real-time", '<span style="color: red; font-weight:bold;"><i class="fa fa-hourglass-half"></i> Real-time</span>');
-                }
-            }
-
-            // Longer than 10 days => Red
-            // Shorter than 2 days => Red
-            if (/Game maximum duration/.test(tLabel.innerText)) {
-                let dtime = tValue.innerText.match(/(\d+) day/);
-
-                if (dtime != null && (dtime[1] > 10 || dtime[1] < 2)) {
-                    tValue.style.color = 'red';
-                    tValue.style.fontWeight = 'bold';
-                }
-                else if (dtime != null && dtime[1] >= 5) {
-                    tValue.style.color = 'orange';
-                }
-            }
-
-            // Longer than 10 days => Red
-            // Shorter than 2 days => Red
-            if (/Time allotted to each player/.test(tLabel.innerText)) {
-                let dtime = tValue.innerText.match(/(\d+)h\d+/);
-
-                if (dtime != null && dtime[1] < 12) {
-                    tValue.style.color = 'red';
-                    tValue.style.fontWeight = 'bold';
-                }
-                else if (dtime != null && dtime[1] < 24) {
-                    tValue.style.color = 'orange';
+            switch (true) {
+                    // On ajoute des accolades {...} pour créer un "bloc" local pour chaque case.
+                    // Cela résout l'erreur du linter.
+                case /Number of players.*/.test(tLabel.innerText): {
+                    const dPlayers = tValue.innerText.match(/(\d+)/);
+                    if (dPlayers && dPlayers[1] > 3) {
+                        tValue.style.color = 'red';
+                        tValue.style.fontWeight = 'bold';
+                    }
+                    break;
                 }
 
-                dtime = tValue.innerText.match(/(\d+) days/);
-
-                if (dtime != null && dtime[1] >= 5) {
-                    tValue.style.color = 'red';
-                    tValue.style.fontWeight = 'bold';
+                case /Mode of stage.*/.test(tLabel.innerText): {
+                    if (/Round robin/.test(tValue.innerText)) {
+                        tValue.innerHTML = tValue.innerHTML.replace("Round robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round robin</span>');
+                    } else if (/Swiss system/.test(tValue.innerText)) {
+                        tValue.innerHTML = tValue.innerHTML.replace("Swiss system", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss system</span>');
+                    }
+                    break;
                 }
-                else if (dtime != null && dtime[1] > 2) {
-                    tValue.style.color = 'orange';
+
+                case /Game speed/.test(tLabel.innerText): {
+                    if (/Real-time/.test(tValue.innerText)) {
+                        tValue.innerHTML = tValue.innerHTML.replace("Real-time", '<span style="color: red; font-weight:bold;"><i class="fa fa-hourglass-half"></i> Real-time</span>');
+                    }
+                    break;
+                }
+
+                case /Game maximum duration/.test(tLabel.innerText): {
+                    const dtime = tValue.innerText.match(/(\d+) day/);
+                    if (dtime) {
+                        if (dtime[1] > 10 || dtime[1] < 2) {
+                            tValue.style.color = 'red';
+                            tValue.style.fontWeight = 'bold';
+                        } else if (dtime[1] >= 5) {
+                            tValue.style.color = 'orange';
+                        }
+                    }
+                    break;
+                }
+
+                case /Time allotted to each player/.test(tLabel.innerText): {
+                    let dtimeH = tValue.innerText.match(/(\d+)h\d+/);
+                    if (dtimeH) {
+                        if (dtimeH[1] < 12) {
+                            tValue.style.color = 'red';
+                            tValue.style.fontWeight = 'bold';
+                        } else if (dtimeH[1] < 24) {
+                            tValue.style.color = 'orange';
+                        }
+                    }
+
+                    let dtimeD = tValue.innerText.match(/(\d+) days/);
+                    if (dtimeD) {
+                        if (dtimeD[1] >= 5) {
+                            tValue.style.color = 'red';
+                            tValue.style.fontWeight = 'bold';
+                        } else if (dtimeD[1] > 2) {
+                            tValue.style.color = 'orange';
+                        }
+                    }
+                    break;
                 }
             }
         });
 
+        // --- 3. Surligner le joueur actuel ---
+        if (window.globalUserInfos && globalUserInfos.name) {
+            document.querySelectorAll('.tournaments-registered-players__name').forEach(p => {
+                if (p.innerText === globalUserInfos.name) {
+                    const playerContainer = p.closest('.tournaments-registered-players__player');
+                    if (playerContainer) {
+                        playerContainer.style.borderColor = 'red';
+                    }
+                }
+            });
+        }
 
-        // Highlight current player
-        document.querySelectorAll('.tournaments-registered-players__name').forEach(p => { if (p.innerText === globalUserInfos.name) { p.closest('.tournaments-registered-players__player').style.borderColor = 'red';} });
+        mainPresentation.dataset.bgaEnhanced = 'true';
+
+        // Réactivation de l'observateur pour les mises à jour dynamiques de la page
+        observer_tournament.observe(document.body, config_stree);
     }
 
     function fixCalendarLinks() {
@@ -803,20 +834,6 @@ img.emblem { background-color: white; }
 
     /* PLAYER */
     /* Ajoute un fond aux jeux non connus actuellement sur la page https://boardgamearena.com/player?id=XXX&section=prestige */
-/*
-    function checkPlayerGameForUnknown_old() {
-        if (document.querySelector('#pagesection_prestige') != null) {
-            observer_playergames.disconnect();
-            document.querySelectorAll('.palmares_game').forEach(
-                g => {
-                    if (globalUserInfos.game_list.find( gi => gi.id == g.querySelector('.bga-link').getAttribute('href').match(/&game=([0-9]+)/)[1]).player_rank == 0) {
-                        g.style.backgroundColor = '#ffc0cb';
-                    }
-                }
-            );
-        }
-    }
- */
     function checkPlayerGameForUnknown() {
         if (document.querySelector('#pagesection_prestige') == null) {
             return;
