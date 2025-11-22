@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.23.4
+// @version      0.23.5
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -14,9 +14,8 @@
 // liste des jeux
 //globalUserInfos.game_list.forEach(function(e, i) { if (e.name === 'tagteam') { console.log('tag team: ' + i + ' (id: '+ e.id + ')'); } });
 
-// TODO : SIMPLE GAME : Indiquer le nombre de parties déjà en cours => globalUserInfos.table_infos.tables[id].game_name
-// TODO : ARENA : Indiquer le nombre de parties Arena déjà en cours
-// TODO : GAME : Intégrer la page wiki des tips FR
+// liste des jeux favoris
+//globalUserInfos.game_list.filter(jeu => jeu.favorite === true);
 
 (function() {
     'use strict';
@@ -32,6 +31,7 @@
     document.head.appendChild(document.createElement('style')).innerHTML = `
 #pagemaintitletext { color: black; }
 #game-logo { top: 5px; margin: 0 6px; }
+#game-tuto { font-size: 40px; }
 
 .game_box_wrap:has(.alpha_game) { background-color: lightcoral; }
 .alphabanner { background-color: lightcoral; }
@@ -196,7 +196,7 @@
                 return;
             }
 
-            document.querySelector('#site-logo').insertAdjacentHTML('beforebegin','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_display_name + '"></a></div>');
+            document.querySelector('#site-logo').insertAdjacentHTML('beforebegin','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_display_name + '"></a></div> <div id="game-tuto"><a id="gametutoicon" href="/tutorial?game=' + gameui.game_name + '">👨‍🎓</a></div>');
             logDebug('addGamesButtons() - #game-logo button added');
         }
 
