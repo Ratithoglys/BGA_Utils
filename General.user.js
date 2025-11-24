@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.23.5
+// @version      0.23.6
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -32,6 +32,7 @@
 #pagemaintitletext { color: black; }
 #game-logo { top: 5px; margin: 0 6px; }
 #game-tuto { font-size: 40px; }
+#variant_wrap { background-color: #ccff00; }
 
 .game_box_wrap:has(.alpha_game) { background-color: lightcoral; }
 .alphabanner { background-color: lightcoral; }
