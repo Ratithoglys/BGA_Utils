@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: GamesInProgress & Tournaments
 // @namespace    https://ebumna.net/
-// @version      0.23
+// @version      0.24
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -624,6 +624,7 @@ img.emblem { background-color: white; }
 
     /* TOURNAMMENTS */
     function improveTournamentsList() {
+        logDebug("improveTournamentsList()");
         observer_tournamentList.disconnect(); // On arrête l'observation pendant qu'on modifie
 
         const tournamentRows = document.querySelectorAll('#tournament_list .tournaments-list-result');
@@ -648,8 +649,8 @@ img.emblem { background-color: white; }
             // --- 2. Type et vitesse ---
             const typeCell = row.querySelector('.tournaments-list-result__type');
             if (typeCell) {
-                if (/Round robin/.test(typeCell.innerText)) {
-                    typeCell.innerHTML = typeCell.innerHTML.replace("Round robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round robin</span>');
+                if (/Round Robin/.test(typeCell.innerText)) {
+                    typeCell.innerHTML = typeCell.innerHTML.replace("Round Robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round Robin</span>');
                 } else if (/Swiss System/.test(typeCell.innerText)) {
                     typeCell.innerHTML = typeCell.innerHTML.replace("Swiss System", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss System</span>');
                 } else if (/Groups Stage/.test(typeCell.innerText)) {
@@ -695,6 +696,7 @@ img.emblem { background-color: white; }
     }
 
     function improveTournamentDetails() {
+        logDebug("improveTournamentDetails()");
         const mainPresentation = document.querySelector('.tournaments-mode-presentation__main');
 
         if (!mainPresentation || mainPresentation.dataset.bgaEnhanced) {
@@ -702,7 +704,7 @@ img.emblem { background-color: white; }
         }
 
         observer_tournament.disconnect();
-        logDebug("Amélioration des détails du tournoi...");
+        logDebug("improveTournamentDetails()> Amélioration des détails du tournoi...");
 
         // --- 1. Titres des sections ---
         document.querySelectorAll('.tournaments-mode-presentation__name').forEach(t => {
@@ -737,8 +739,8 @@ img.emblem { background-color: white; }
                 }
 
                 case /Mode of stage.*/.test(tLabel.innerText): {
-                    if (/Round robin/.test(tValue.innerText)) {
-                        tValue.innerHTML = tValue.innerHTML.replace("Round robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round robin</span>');
+                    if (/Round Robin/.test(tValue.innerText)) {
+                        tValue.innerHTML = tValue.innerHTML.replace("Round Robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round Robin</span>');
                     } else if (/Swiss system/.test(tValue.innerText)) {
                         tValue.innerHTML = tValue.innerHTML.replace("Swiss system", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss system</span>');
                     }
@@ -809,6 +811,7 @@ img.emblem { background-color: white; }
     }
 
     function fixCalendarLinks() {
+        logDebug("fixCalendarLinks()");
         if (document.querySelector('#calendarDlg > p > a') == null) {
             return
         }
@@ -835,6 +838,7 @@ img.emblem { background-color: white; }
     /* PLAYER */
     /* Ajoute un fond aux jeux non connus actuellement sur la page https://boardgamearena.com/player?id=XXX&section=prestige */
     function checkPlayerGameForUnknown() {
+        logDebug("checkPlayerGameForUnknown()");
         if (document.querySelector('#pagesection_prestige') == null) {
             return;
         }
