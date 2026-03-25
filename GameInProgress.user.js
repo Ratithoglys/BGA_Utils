@@ -741,8 +741,8 @@ img.emblem { background-color: white; }
                 case /Mode of stage.*/.test(tLabel.innerText): {
                     if (/Round Robin/.test(tValue.innerText)) {
                         tValue.innerHTML = tValue.innerHTML.replace("Round Robin", '<span style="color: red; font-weight:bold;"><i class="fa fa-users"></i> Round Robin</span>');
-                    } else if (/Swiss System/.test(tValue.innerText)) {
-                        tValue.innerHTML = tValue.innerHTML.replace("Swiss System", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss System</span>');
+                    } else if (/Swiss system/.test(tValue.innerText)) {
+                        tValue.innerHTML = tValue.innerHTML.replace("Swiss system", '<span style="color: orange; font-weight:bold;"><i class="fa fa-sharp fa-solid fa-plus-square" style="color: red; background-color: white;"></i> Swiss system</span>');
                     }
                     break;
                 }

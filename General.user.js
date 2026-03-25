@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.23.6
+// @version      0.23.7
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
+// @exclude      https://boardgamearena.com/blank?*
 // @icon         https://x.boardgamearena.net/data/themereleases/231110-1000/img/logo/logo.png
 // @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/General.user.js
 // @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/General.user.js
@@ -21,7 +22,7 @@
     'use strict';
 
  	// Enable for debugging
-	const DEBUG = false; // Changed to true for debugging
+	const DEBUG = true; // Changed to true for debugging
 	const logDebug = (...msgs) => {
 		if (DEBUG) console.debug('BGA_GEN> ', msgs);
 	};
@@ -323,6 +324,7 @@
     /** Player color **/
     function betterPlayerColorNotification() {
         logDebug('betterPlayerColorNotification() - START');
+
         if (!/boardgamearena\.com\/\d+\/.*?\?table=.*/.test(document.baseURI)) {
             logDebug('betterPlayerColorNotification() - not in game table, disconnecting observer_color');
             observer_color.disconnect();
@@ -330,10 +332,11 @@
             return;
         }
 
-        if (document.querySelector('#pagemaintitletext') != null) {
+        if (document.querySelector('#pagemaintitletext') != null && document.querySelector('#player_boards > .current-player-board > div') != null) {
             logDebug('betterPlayerColorNotification() - found #pagemaintitletext, disconnecting observer_color');
             observer_color.disconnect();
             logDebug('observer_color - disconnected');
+            logDebug(document.querySelector('#player_boards > .current-player-board > div'));
             userColor = document.querySelector('#player_boards > .current-player-board > div').id.replace('player_board_inner_','');
             logDebug('betterPlayerColorNotification() - userColor:', userColor);
 
