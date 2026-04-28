@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.24
+// @version      0.25
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -11,12 +11,6 @@
 // @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/General.user.js
 // @grant        none
 // ==/UserScript==
-
-// liste des jeux
-//globalUserInfos.game_list.forEach(function(e, i) { if (e.name === 'tagteam') { console.log('tag team: ' + i + ' (id: '+ e.id + ')'); } });
-
-// liste des jeux favoris
-//globalUserInfos.game_list.filter(jeu => jeu.favorite === true);
 
 (function() {
     'use strict';
@@ -32,7 +26,8 @@
     document.head.appendChild(document.createElement('style')).innerHTML = `
 #pagemaintitletext { color: black; }
 #game-logo { top: 5px; margin: 0 6px; }
-#game-tuto { font-size: 40px; }
+#ebgame-tuto { font-size: 40px; }
+#ebgame-type { font-size: 40px; }
 #variant_wrap { background-color: #ccff00; }
 
 .game_box_wrap:has(.alpha_game) { background-color: lightcoral; }
@@ -170,11 +165,6 @@
     logDebug('observer_color - start observing');
     observer_color.observe(document.body, config_childs);
 
-    /* GAMES > Game type - Once per load **/
-    const observer_banner = new MutationObserver(addAlertsBanners);
-    logDebug('observer_banner - start observing');
-    observer_banner.observe(document.body, config_childs);
-
     /* PLAY NOW > Tables ELO coloring - All the time */
     const observer_gametables = new MutationObserver(playnow_loop);
     logDebug('observer_gametables - declared, will start observing later');
@@ -206,7 +196,7 @@
     function addGamesButtons() {
         logDebug('addGamesButtons() - START');
 
-        /* GAMES : Button linking to the game page */
+        /* GAMES : Button linking to the game page and tutorial, tournament/arena/friendly info */
         if (/boardgamearena\.com\/\d+\//.test(document.baseURI) && document.querySelector('#game-logo') == null) {
             logDebug('addGamesButtons() - game page detected and #game-logo is null');
             if (typeof gameui === 'undefined' || gameui.game_name == "" || gameui.game_display_name == "") {
@@ -214,8 +204,15 @@
                 return;
             }
 
-            document.querySelector('#site-logo').insertAdjacentHTML('beforebegin','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_display_name + '"></a></div> <div id="game-tuto"><a id="gametutoicon" href="/tutorial?game=' + gameui.game_name + '">👨‍🎓</a></div>');
+            document.querySelector('#site-logo').insertAdjacentHTML('beforebegin','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_display_name + '"></a></div> <div id="ebgame-tuto"><a id="gametutoicon" href="/tutorial?game=' + gameui.game_name + '">👨‍🎓</a></div>');
             logDebug('addGamesButtons() - #game-logo button added');
+
+            if (gameui.tournament_id !== null) {
+                document.querySelector('#site-logo').insertAdjacentHTML('beforebegin','<div id="ebgame-type"><a id="gametypeicon" href="/tournament?id=' + gameui.tournament_id + '">🏆</a></div>');
+            }
+            else if (document.body.classList.contains('arena_mode')) {
+                document.querySelector('#site-logo').insertAdjacentHTML('beforebegin','<div id="ebgame-type">⚔️</div>');
+            }
         }
 
         /* MENU : Button linking to the notifications */
@@ -426,49 +423,6 @@
             logDebug('betterPlayerColorNotification() - color styles applied');
         }
         logDebug('betterPlayerColorNotification() - END');
-    }
-
-    /** Game type, tips **/
-    function addAlertsBanners() {
-        logDebug('addAlertsBanners() - START');
-        if (!/boardgamearena\.com\/\d+\/.*?\?table=.*/.test(document.baseURI)) {
-            logDebug('addAlertsBanners() - not in game table, disconnecting observer_banner');
-            observer_banner.disconnect();
-            logDebug('observer_banner - disconnected');
-            return;
-        }
-
-        if (typeof gameui !== 'undefined') {
-            logDebug('addAlertsBanners() - gameui is defined, disconnecting observer_banner');
-            observer_banner.disconnect();
-            logDebug('observer_banner - disconnected');
-            if (gameui.tournament_id !== null && document.querySelector('#arena_ending_soon') !== null) {
-                logDebug('addAlertsBanners() - tournament game detected');
-                addBox('RankInfo');
-                addBoxTitleLine('RankInfo', '🏆 <a href="/tournament?id='+gameui.tournament_id+'" class="">Tournament</a> 🏆');
-                document.querySelector('#ebBox-RankInfo > div').style.backgroundColor = 'gold';
-                logDebug('addAlertsBanners() - Tournament box added');
-            }
-            else if (document.body.classList.contains('arena_mode') && document.querySelector('#arena_ending_soon') !== null) {
-                logDebug('addAlertsBanners() - arena game detected');
-                addBox('RankInfo');
-                addBoxTitleLine('RankInfo', '⚔️ Arena ⚔️');
-                document.querySelector('#ebBox-RankInfo > div').style.backgroundColor = 'royalblue';
-                logDebug('addAlertsBanners() - Arena box added');
-            }
-            else if (document.body.classList.contains('training_mode') && document.querySelector('#arena_ending_soon') !== null) {
-                logDebug('addAlertsBanners() - training game detected');
-                addBox('RankInfo');
-                addBoxTitleLine('RankInfo', '❤️ Friendly ❤️');
-                document.querySelector('#ebBox-RankInfo > div').style.backgroundColor = 'lightgrey';
-                logDebug('addAlertsBanners() - Friendly box added');
-            }
-
-            // addBox('Tips');
-            // addBoxTitleLine('Tips', '<div class="bga-flag" data-country="GB"></div> Tips EN');
-            // addBoxTitleLine('Tips', '<div class="bga-flag" data-country="FR"></div> Tips FR');
-        }
-        logDebug('addAlertsBanners() - END');
     }
 
     /* PLAY NOW */
