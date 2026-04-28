@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.23.7
+// @version      0.24
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -114,6 +114,18 @@
     cursor: pointer;
     transition: .1s;
 }
+
+/* CSS pour le coeur favori */
+.eb-favorite-heart {
+    position: absolute;
+    top: -6px;
+    left: 20px;
+    font-size: 40px;
+    z-index: 100;
+    pointer-events: none; /* Empêche le coeur de bloquer les clics sur la vignette */
+    filter: drop-shadow(0px 0px 4px rgba(255,255,255,0.9));
+    line-height: 1;
+}
 `
 
     document.body.insertAdjacentHTML('beforeend',`<div id="ebumna-boxes"></div>`);
@@ -149,9 +161,9 @@
     logDebug('observer_mobilemenu - start observing');
     observer_mobilemenu.observe(document.body, config_childs);
 
-    const observer_popups = new MutationObserver(hideAnnoyingShit);
-    logDebug('observer_popups - start observing');
-    observer_popups.observe(document.body, config_childs);
+    // const observer_popups = new MutationObserver(hideAnnoyingShit);
+    // logDebug('observer_popups - start observing');
+    // observer_popups.observe(document.body, config_childs);
 
     /* GAMES > Player color - Once per load **/
     const observer_color = new MutationObserver(betterPlayerColorNotification);
@@ -167,6 +179,10 @@
     const observer_gametables = new MutationObserver(playnow_loop);
     logDebug('observer_gametables - declared, will start observing later');
 
+    /* GAMES LIST > Favorite Heart */
+    const observer_favorite_games = new MutationObserver(favoriteGames_loop);
+    logDebug('observer_favorite_games - start observing');
+    observer_favorite_games.observe(document.body, config_stree);
 
     function hideAnnoyingShit() {
         logDebug('hideAnnoyingShit() - START');
@@ -318,6 +334,64 @@
             }
         }
         logDebug('addMobileGamesButtons() - END');
+    }
+
+    /* FAVORITE GAMES HIGHLIGHTING */
+    let favGamesTimeout = null;
+    function favoriteGames_loop() {
+        if (!/boardgamearena\.com\/gamelist/.test(window.location.href)) return;
+
+        // Anti-spam (Debounce) : on attend que le DOM se calme 300ms avant de lancer le traitement
+        if (favGamesTimeout) {
+            clearTimeout(favGamesTimeout);
+        }
+        favGamesTimeout = setTimeout(markFavoriteGames, 300);
+    }
+
+    function markFavoriteGames() {
+        if (typeof globalUserInfos === 'undefined' || !globalUserInfos.game_list) return;
+
+        // On supprime la mise en cache stricte : on recalcule le Set à chaque appel.
+        // Cela prend moins d'1 milliseconde et permet de voir les ajouts/retraits en direct.
+        const favGames = globalUserInfos.game_list.filter(g => g.favorite === true || g.favorite === 1 || g.favorite === "1");
+        const favoriteGameNames = new Set(favGames.map(g => g.name));
+
+        // Utilisation de votre super sélecteur !
+        const gameLinks = document.querySelectorAll('.bga-game-grid > div > a');
+
+        gameLinks.forEach((link) => {
+            if (!link.href) return;
+
+            let gameName = null;
+            try {
+                // Extraction du nom du jeu depuis l'URL
+                const url = new URL(link.href, window.location.origin);
+                gameName = url.searchParams.get('game');
+                if (!gameName) {
+                    const match = url.pathname.match(/\/game\/([^\/]+)/);
+                    if (match) gameName = match[1];
+                }
+            } catch (e) {
+                return; // En cas d'URL invalide
+            }
+
+            // Vérifier si le jeu est dans notre Set de favoris
+            const isFav = gameName && favoriteGameNames.has(gameName);
+            const existingHeart = link.querySelector('.eb-favorite-heart');
+
+            // Ajout du coeur
+            if (isFav && !existingHeart) {
+                // Le lien doit pouvoir servir de repère (relative) au coeur (en absolute)
+                if (window.getComputedStyle(link).position === 'static') {
+                    link.style.position = 'relative';
+                }
+                link.insertAdjacentHTML('beforeend', '<div class="eb-favorite-heart">❤️</div>');
+            }
+            // Retrait du coeur
+            else if (!isFav && existingHeart) {
+                existingHeart.remove();
+            }
+        });
     }
 
     /* GAMES */
