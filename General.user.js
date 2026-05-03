@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.25
+// @version      0.26
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -43,6 +43,8 @@
     font-size: 0.85rem;
     cursor: pointer;
 }
+
+div[aria-label=turnBasedNotesIncent] { display: none }
 
 .ebBox {
     display: inline-flex;
@@ -144,44 +146,32 @@
         subtree: false
     };
 
-    //const tournament_popup = '<div id="tournament_popup" style="display:block"><div id="arena_near_end_text" class="roundedboxinner">🏆 This is a Tournament match 🏆</div></div>';
-    //const arena_popup = '<div id="arena_popup" style="display:block"><div id="arena_near_end_text" class="roundedboxinner">⚔️ This is an Arena match ⚔️</div></div>';
-
     /* GENERAL TOPBAR UI BUTTONS - Once per load*/
     const observer_menu = new MutationObserver(addGamesButtons);
-    logDebug('observer_menu - start observing');
     observer_menu.observe(document.body, config_stree);
 
     const observer_mobilemenu = new MutationObserver(addMobileGamesButtons);
-    logDebug('observer_mobilemenu - start observing');
     observer_mobilemenu.observe(document.body, config_childs);
 
-    // const observer_popups = new MutationObserver(hideAnnoyingShit);
-    // logDebug('observer_popups - start observing');
-    // observer_popups.observe(document.body, config_childs);
+    const observer_popups = new MutationObserver(hideAnnoyingShit);
+    observer_popups.observe(document.body, config_childs);
 
     /* GAMES > Player color - Once per load **/
     const observer_color = new MutationObserver(betterPlayerColorNotification);
-    logDebug('observer_color - start observing');
     observer_color.observe(document.body, config_childs);
 
     /* PLAY NOW > Tables ELO coloring - All the time */
     const observer_gametables = new MutationObserver(playnow_loop);
-    logDebug('observer_gametables - declared, will start observing later');
 
     /* GAMES LIST > Favorite Heart */
     const observer_favorite_games = new MutationObserver(favoriteGames_loop);
-    logDebug('observer_favorite_games - start observing');
     observer_favorite_games.observe(document.body, config_stree);
 
     function hideAnnoyingShit() {
         logDebug('hideAnnoyingShit() - START');
-        // Remove the annoying "Personnal notes" popup
         if (document.querySelector('div[aria-label=turnBasedNotesIncent]') !== null) {
             logDebug('hideAnnoyingShit() - found [aria-label=turnBasedNotesIncent], disconnecting observer_popups');
             observer_popups.disconnect();
-            logDebug('observer_popups - disconnected');
-            document.querySelector('#turnBasedNotesIncent').innerHTML = null;
         }
 
         if (document.querySelector('#gamelobby_inner') !== null) {
@@ -353,8 +343,14 @@
         const favGames = globalUserInfos.game_list.filter(g => g.favorite === true || g.favorite === 1 || g.favorite === "1");
         const favoriteGameNames = new Set(favGames.map(g => g.name));
 
-        // Utilisation de votre super sélecteur !
-        const gameLinks = document.querySelectorAll('.bga-game-grid > div > a');
+        let gameLinks = document.querySelectorAll('.bga-game-grid > div > a');
+        if (gameLinks != NodeList.length) {
+            gameLinks = document.querySelectorAll('.bga-game-browser-carousel__item > a');
+        }
+
+        if (gameLinks.length > 0) {
+            observer_favorite_games.disconnect();
+        }
 
         gameLinks.forEach((link) => {
             if (!link.href) return;
@@ -399,14 +395,12 @@
         if (!/boardgamearena\.com\/\d+\/.*?\?table=.*/.test(document.baseURI)) {
             logDebug('betterPlayerColorNotification() - not in game table, disconnecting observer_color');
             observer_color.disconnect();
-            logDebug('observer_color - disconnected');
             return;
         }
 
         if (document.querySelector('#pagemaintitletext') != null && document.querySelector('#player_boards > .current-player-board > div') != null) {
             logDebug('betterPlayerColorNotification() - found #pagemaintitletext, disconnecting observer_color');
             observer_color.disconnect();
-            logDebug('observer_color - disconnected');
             logDebug(document.querySelector('#player_boards > .current-player-board > div'));
             userColor = document.querySelector('#player_boards > .current-player-board > div').id.replace('player_board_inner_','');
             logDebug('betterPlayerColorNotification() - userColor:', userColor);
