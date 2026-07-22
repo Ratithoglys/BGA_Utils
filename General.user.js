@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.27.1
+// @version      0.27.2
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -68,7 +68,7 @@
 .bgabutton_gray { background-color: #c9c9c9; }
 .tableplace_freeplace { background-color: lightgray; }
 
-.bga-vertical.svelte-ok69b5 .bga-menu-bar-items__menu-item.bga-menu-sub-menu-item-eb.svelte-ok69b5 {
+.bga-vertical.svelte-1ymj00v .bga-menu-bar-items__menu-item.bga-menu-sub-menu-item-eb.svelte-1ymj00v {
     padding: 10px 0 10px 95px;
     font-size: 0.85rem;
     cursor: pointer;
@@ -300,8 +300,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 logDebug('addGamesButtons() - not game page, #notifications is null and .bga-menu-bar-items exists, disconnecting observer_menu');
                 observer_menu.disconnect();
                 logDebug('observer_menu - disconnected');
-                document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="notifications" class="bga-menu-bar-items__menu-item bga-link truncate svelte-ok69b5" href="/playernotif">🚨 Notifs  </a>');
-                document.querySelector('.bga-menu-bar-items.bga-mobile').firstChild.insertAdjacentHTML('afterend','<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-ok69b5" href="/playernotif">🚨 </a>');
+                document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="notifications" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1ymj00v" href="/playernotif">🚨 Notifs  </a>');
+                document.querySelector('.bga-menu-bar-items.bga-mobile').firstChild.insertAdjacentHTML('afterend','<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-1ymj00v" href="/playernotif">🚨 </a>');
                 logDebug('addGamesButtons() - #notifications button added');
             }
         }
@@ -312,8 +312,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 logDebug('addGamesButtons() - not game page, #newsFeed is null and .bga-menu-bar-items exists, disconnecting observer_menu');
                 observer_menu.disconnect();
                 logDebug('observer_menu - disconnected');
-                document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="newsFeed" class="bga-menu-bar-items__menu-item bga-link truncate svelte-ok69b5" href="/player?section=recent">📰 Feed  </a>');
-                document.querySelector('.bga-menu-bar-items.bga-mobile').firstChild.insertAdjacentHTML('afterend','<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-ok69b5" href="/player?section=recent">📰 </a>');
+                document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="newsFeed" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1ymj00v" href="/player?section=recent">📰 Feed  </a>');
+                document.querySelector('.bga-menu-bar-items.bga-mobile').firstChild.insertAdjacentHTML('afterend','<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-1ymj00v" href="/player?section=recent">📰 </a>');
                 logDebug('addGamesButtons() - #newsFeed button added');
             }
         }
@@ -333,8 +333,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 observer_menu.disconnect();
                 logDebug('observer_menu - disconnected');
                 logDebug('addGamesButtons() > 🚫 Table > no #refreshPlayersBtn > bga-menu-bar-items');
-                document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="backToTables" class="bga-menu-bar-items__menu-item bga-link truncate svelte-ok69b5" href="/gameinprogress">🎲 Tables  </a>');
-                document.querySelector('.bga-menu-bar-items.bga-mobile').firstChild.insertAdjacentHTML('afterend','<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-ok69b5" href="/gameinprogress">🎲 </a>');
+                document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="backToTables" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1ymj00v" href="/gameinprogress">🎲 Tables  </a>');
+                document.querySelector('.bga-menu-bar-items.bga-mobile').firstChild.insertAdjacentHTML('afterend','<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-1ymj00v" href="/gameinprogress">🎲 </a>');
                 logDebug('addGamesButtons() - #backToTables button added to bga-menu-bar-items');
             }
         }
@@ -345,8 +345,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 logDebug('addGamesButtons() - not game page, #tournamentsList is null and .bga-menu-bar-items exists, disconnecting observer_menu');
                 observer_menu.disconnect();
                 logDebug('observer_menu - disconnected');
-                document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="tournamentsList" class="bga-menu-bar-items__menu-item bga-link truncate svelte-ok69b5" href="/tournamentlist">🏆 Tournois  </a>');
-                document.querySelector('.bga-menu-bar-items.bga-mobile').firstChild.insertAdjacentHTML('afterend','<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-ok69b5" href="/tournamentlist">🏆 </a>');
+                document.querySelector('.bga-menu-bar-items').firstChild.insertAdjacentHTML('afterend','<a id="tournamentsList" class="bga-menu-bar-items__menu-item bga-link truncate svelte-1ymj00v" href="/tournamentlist">🏆 Tournois  </a>');
+                document.querySelector('.bga-menu-bar-items.bga-mobile').firstChild.insertAdjacentHTML('afterend','<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-1ymj00v" href="/tournamentlist">🏆 </a>');
                 logDebug('addGamesButtons() - #tournamentsList button added');
             }
         }
@@ -380,7 +380,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (document.getElementById('notifsMobile') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
                 logDebug('addMobileGamesButtons() - not game page, #notifsMobile is null and .bga-menu-bar-items exists');
-                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/headlines"]').insertAdjacentHTML('afterend','<a id="notifsMobile" class="bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate svelte-ok69b5" href="/playernotif"><div class="bga-menu-sub-menu-item__tree-icon svelte-ok69b5"></div>🚨 Notifs</a>');
+                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/headlines"]').insertAdjacentHTML('afterend','<a id="notifsMobile" class="bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate svelte-1ymj00v" href="/playernotif"><div class="bga-menu-sub-menu-item__tree-icon svelte-1ymj00v"></div>🚨 Notifs</a>');
                 logDebug('addMobileGamesButtons() - #notifsMobile button added');
             }
         }
@@ -389,7 +389,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (document.getElementById('newsFeedMobile') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
                 logDebug('addMobileGamesButtons() - not game page, #newsFeedMobile is null and .bga-menu-bar-items exists');
-                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/headlines"]').insertAdjacentHTML('afterend','<a id="newsFeedMobile" class="bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate svelte-ok69b5" href="/player?section=recent"><div class="bga-menu-sub-menu-item__tree-icon svelte-ok69b5"></div> <div class="bga-menu-sub-menu-item__tree-icon-cont svelte-ok69b5"></div>📰 Feed</a>');
+                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/headlines"]').insertAdjacentHTML('afterend','<a id="newsFeedMobile" class="bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate svelte-1ymj00v" href="/player?section=recent"><div class="bga-menu-sub-menu-item__tree-icon svelte-1ymj00v"></div> <div class="bga-menu-sub-menu-item__tree-icon-cont svelte-1ymj00v"></div>📰 Feed</a>');
                 logDebug('addMobileGamesButtons() - #newsFeedMobile button added');
             }
         }
@@ -398,7 +398,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (document.getElementById('tablesMobile') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
                 logDebug('addMobileGamesButtons() - not game page, #tablesMobile is null and .bga-menu-bar-items exists');
-                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/lobby"]').insertAdjacentHTML('afterend','<a id="tablesMobile" class="bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate svelte-ok69b5" href="/gameinprogress"><div class="bga-menu-sub-menu-item__tree-icon svelte-ok69b5"></div> 🎲 Tables</a>');
+                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/lobby"]').insertAdjacentHTML('afterend','<a id="tablesMobile" class="bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate svelte-1ymj00v" href="/gameinprogress"><div class="bga-menu-sub-menu-item__tree-icon svelte-1ymj00v"></div> 🎲 Tables</a>');
                 logDebug('addMobileGamesButtons() - #tablesMobile button added');
             }
         }
@@ -407,7 +407,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (document.getElementById('tournamentsListMobile') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
                 logDebug('addMobileGamesButtons() - not game page, #tournamentsListMobile is null and .bga-menu-bar-items exists');
-                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/lobby"]').insertAdjacentHTML('afterend','<a id="tournamentsListMobile" class="bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate svelte-ok69b5" href="/tournamentlist"><div class="bga-menu-sub-menu-item__tree-icon svelte-ok69b5"></div> <div class="bga-menu-sub-menu-item__tree-icon-cont svelte-ok69b5"></div>🏆 Tournois</a>');
+                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/lobby"]').insertAdjacentHTML('afterend','<a id="tournamentsListMobile" class="bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate svelte-1ymj00v" href="/tournamentlist"><div class="bga-menu-sub-menu-item__tree-icon svelte-1ymj00v"></div> <div class="bga-menu-sub-menu-item__tree-icon-cont svelte-1ymj00v"></div>🏆 Tournois</a>');
                 logDebug('addMobileGamesButtons() - #tournamentsListMobile button added');
             }
         }
