@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.27.2
+// @version      0.27.3
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -199,7 +199,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
     /* GAMES > Player color - Once per load **/
     const observer_color = new MutationObserver(betterPlayerColorNotification);
-    // observer_color.observe(document.body, config_childs);
+    // observer_color.observe(document.body, config_stree);
 
     /* PLAY NOW > Tables ELO coloring - All the time */
     const observer_gametables = new MutationObserver(playnow_loop);
@@ -235,7 +235,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
         // Coloration du joueur (uniquement si on est sur une page de jeu)
         if (/boardgamearena\.com\/\d+\/.*?\?table=.*/.test(document.baseURI)) {
-            observer_color.observe(document.body, config_childs);
+            observer_color.observe(document.body, config_stree);
         }
 
         // Cas spécifique du Lobby
