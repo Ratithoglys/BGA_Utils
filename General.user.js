@@ -371,7 +371,7 @@
             if (gameui.tournament_id !== null && document.querySelector('#arena_ending_soon') !== null) {
                 logDebug('addAlertsBanners() - tournament game detected');
                 addBox('RankInfo');
-                addBoxTitleLine('RankInfo', '🏆 <a href="/tournament?id='+gameui.tournament_id+'" class="">Tournament</a> 🏆');
+                addBoxTitleLine('RankInfo', '🏆 <a href="/tournament?id='+gameui.tournament_id+'#overview" class="">Tournament</a> 🏆');
                 document.querySelector('#ebBox-RankInfo > div').style.backgroundColor = 'gold';
                 logDebug('addAlertsBanners() - Tournament box added');
             }
