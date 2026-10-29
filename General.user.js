@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.27.6
+// @version      0.27.7
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -155,13 +155,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 }
 
 /* Profil > Groupes : une ligne par groupe, au lieu d'une seule ligne séparée par des virgules */
-#playergroups .eb-groups-list {
-    margin: 8px 0 0;
-    padding-left: 20px;
-}
-#playergroups .eb-groups-list li {
-    margin: 2px 0;
-}
+#playergroups .eb-groups-list { margin: 8px 0 0; padding-left: 20px; }
+#playergroups .eb-groups-list li { margin: 2px 0; }
 `
 
     // --- GESTION DU CHANGEMENT D'URL (SPA) ---
@@ -282,9 +277,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     // Premier lancement
     init();
 
-    /* PROFIL > Groupes : une ligne par groupe au lieu d'une seule ligne séparée par des virgules.
-       #playergroups contient des liens séparés par des noeuds texte ", " : les déplacer
-       dans un <ul> supprime les virgules, sans toucher aux liens ni à leurs href. */
+    /* PROFIL > Groupes : une ligne par groupe, triée par ordre alphabétique, au lieu
+       d'une seule ligne séparée par des virgules. #playergroups contient des liens
+       séparés par des noeuds texte ", " : les déplacer dans un <ul> supprime les
+       virgules, sans toucher aux liens ni à leurs href. */
     function listPlayerGroups() {
         const container = document.getElementById('playergroups');
         if (!container || container.dataset.ebGroupsListed) {
@@ -294,6 +290,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (links.length === 0) {
             return false;
         }
+        links.sort((a, b) => a.textContent.trim().localeCompare(b.textContent.trim(), 'fr', { sensitivity: 'base' }));
         const list = document.createElement('ul');
         list.className = 'eb-groups-list';
         links.forEach((link) => {
