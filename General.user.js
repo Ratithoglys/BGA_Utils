@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.27.5
+// @version      0.27.6
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -153,6 +153,15 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     filter: drop-shadow(0px 0px 4px rgba(255,255,255,0.9));
     line-height: 1;
 }
+
+/* Profil > Groupes : une ligne par groupe, au lieu d'une seule ligne séparée par des virgules */
+#playergroups .eb-groups-list {
+    margin: 8px 0 0;
+    padding-left: 20px;
+}
+#playergroups .eb-groups-list li {
+    margin: 2px 0;
+}
 `
 
     // --- GESTION DU CHANGEMENT D'URL (SPA) ---
@@ -219,8 +228,16 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         }
     });
 
+    /* PROFIL > Groupes : attend que #playergroups apparaisse avant de le mettre en liste */
+    const observer_groups_wait = new MutationObserver((mutations, obs) => {
+        if (listPlayerGroups()) {
+            obs.disconnect(); // Le guetteur a fini son travail, on l'éteint
+        }
+    });
+
     function init() {
         observer_lobby_wait.disconnect();
+        observer_groups_wait.disconnect();
         logDebug('Initialisation des observers...');
 
         // On observe le body pour les menus et boutons globaux
@@ -236,6 +253,15 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         // Coloration du joueur (uniquement si on est sur une page de jeu)
         if (/boardgamearena\.com\/\d+\/.*?\?table=.*/.test(document.baseURI)) {
             observer_color.observe(document.body, config_stree);
+        }
+
+        // Profil > Groupes en liste (https://boardgamearena.com/player?section=groups)
+        if (/boardgamearena\.com\/player/.test(document.baseURI)) {
+            if (!listPlayerGroups()) {
+                // Pas encore là (ex: navigation SPA) : on attend son apparition
+                logDebug('Groups Wait - En attente de #playergroups...');
+                observer_groups_wait.observe(document.body, config_stree);
+            }
         }
 
         // Cas spécifique du Lobby
@@ -255,6 +281,31 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
     // Premier lancement
     init();
+
+    /* PROFIL > Groupes : une ligne par groupe au lieu d'une seule ligne séparée par des virgules.
+       #playergroups contient des liens séparés par des noeuds texte ", " : les déplacer
+       dans un <ul> supprime les virgules, sans toucher aux liens ni à leurs href. */
+    function listPlayerGroups() {
+        const container = document.getElementById('playergroups');
+        if (!container || container.dataset.ebGroupsListed) {
+            return !!container;
+        }
+        const links = [...container.querySelectorAll('a.bga-link')];
+        if (links.length === 0) {
+            return false;
+        }
+        const list = document.createElement('ul');
+        list.className = 'eb-groups-list';
+        links.forEach((link) => {
+            const item = document.createElement('li');
+            item.appendChild(link);
+            list.appendChild(item);
+        });
+        container.replaceChildren(list);
+        container.dataset.ebGroupsListed = '1';
+        logDebug('listPlayerGroups() -', links.length, 'groupes mis en liste');
+        return true;
+    }
 
     function hideAnnoyingShit() {
         logDebug('hideAnnoyingShit() - START');
