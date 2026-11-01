@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: GamesInProgress & Tournaments
 // @namespace    https://ebumna.net/
-// @version      0.25
+// @version      0.26
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -535,6 +535,24 @@ function improveTournamentDetailsPanel() {
 
             // B. Panneau "Duration & Planning"
             if (title === "Duration & Planning") {
+                // Bannière Real-Time : texte exact actuel "Real-Time", bannière
+                // plein largeur, pas une ligne label/valeur (donc invisible pour
+                // la règle de la liste des tournois, qui cherche "Real-time").
+                // On colore l'élément texte le plus profond, sans toucher à
+                // l'icône de la bannière ; le marqueur évite de retraiter.
+                if (!panel.querySelector('.bga-realtime-enhanced')) {
+                    const candidates = [...panel.querySelectorAll('*')].filter(el =>
+                        /^real[-\s]?time$/i.test(el.textContent.trim()) &&
+                        ![...el.querySelectorAll('*')].some(c =>
+                            /^real[-\s]?time$/i.test(c.textContent.trim()))
+                    );
+                    const rt = candidates[0];
+                    if (rt) {
+                        rt.style.color = 'red';
+                        rt.style.fontWeight = 'bold';
+                        rt.classList.add('bga-realtime-enhanced');
+                    }
+                }
                 const durationSpans = panel.querySelectorAll('.font-bold.text-center.leading-tight span');
                 durationSpans.forEach(span => {
                     if (span.classList.contains('bga-enhanced') || span.innerHTML.includes('style="color')) return;
