@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.28
+// @version      0.29
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -68,7 +68,7 @@
 .bgabutton_gray { background-color: #c9c9c9; }
 .tableplace_freeplace { background-color: lightgray; }
 
-.bga-vertical.svelte-yv59md .bga-menu-bar-items__menu-item.bga-menu-sub-menu-item-eb.svelte-yv59md {
+.bga-vertical .bga-menu-bar-items__menu-item.bga-menu-sub-menu-item-eb {
     padding: 10px 0 10px 95px;
     font-size: 0.85rem;
     cursor: pointer;
@@ -331,6 +331,30 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         first.insertAdjacentHTML('afterend', html);
         return true;
     }
+    /* Reprise dynamique de la classe du premier lien natif du menu : le
+       suffixe Svelte (svelte-...) change à chaque déploiement BGA, il ne
+       doit plus être codé en dur. Si aucun lien natif n'est encore monté,
+       repli sur les classes de base (lien visible, sans style scopé). */
+    function nativeMenuLinkClass() {
+        const native = document.querySelector('.bga-menu-bar-items a.bga-menu-bar-items__menu-item');
+        return native ? native.className : 'bga-menu-bar-items__menu-item bga-link truncate';
+    }
+    function svelteSuffix() {
+        const m = nativeMenuLinkClass().match(/svelte-[A-Za-z0-9_-]+/);
+        return m ? m[0] : '';
+    }
+    function verticalMenuLinkClass() {
+        const suffix = svelteSuffix();
+        return 'bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate' + (suffix ? ' ' + suffix : '');
+    }
+    function treeIconClass() {
+        const suffix = svelteSuffix();
+        return 'bga-menu-sub-menu-item__tree-icon' + (suffix ? ' ' + suffix : '');
+    }
+    function treeIconContClass() {
+        const suffix = svelteSuffix();
+        return 'bga-menu-sub-menu-item__tree-icon-cont' + (suffix ? ' ' + suffix : '');
+    }
     function addGamesButtons() {
         logDebug('addGamesButtons() - START');
 
@@ -356,8 +380,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         /* MENU : Button linking to the notifications */
         if (document.querySelector('#notifications') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="notifications" class="bga-menu-bar-items__menu-item bga-link truncate svelte-yv59md" href="/playernotif">🚨 Notifs  </a>');
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-yv59md" href="/playernotif">🚨 </a>');
+                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="notifications" class="' + nativeMenuLinkClass() + '" href="/playernotif">🚨 Notifs  </a>');
+                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="' + nativeMenuLinkClass() + '" href="/playernotif">🚨 </a>');
                 logDebug('addGamesButtons() - #notifications button added');
             }
         }
@@ -365,8 +389,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         /* MENU : Button linking to the personnal feed */
         if (document.querySelector('#newsFeed') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="newsFeed" class="bga-menu-bar-items__menu-item bga-link truncate svelte-yv59md" href="/player?section=recent">📰 Feed  </a>');
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-yv59md" href="/player?section=recent">📰 </a>');
+                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="newsFeed" class="' + nativeMenuLinkClass() + '" href="/player?section=recent">📰 Feed  </a>');
+                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="' + nativeMenuLinkClass() + '" href="/player?section=recent">📰 </a>');
                 logDebug('addGamesButtons() - #newsFeed button added');
             }
         }
@@ -383,8 +407,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             }
             else if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
                 logDebug('addGamesButtons() > 🚫 Table > no #refreshPlayersBtn > bga-menu-bar-items');
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="backToTables" class="bga-menu-bar-items__menu-item bga-link truncate svelte-yv59md" href="/gameinprogress">🎲 Tables  </a>');
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-yv59md" href="/gameinprogress">🎲 </a>');
+                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="backToTables" class="' + nativeMenuLinkClass() + '" href="/gameinprogress">🎲 Tables  </a>');
+                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="' + nativeMenuLinkClass() + '" href="/gameinprogress">🎲 </a>');
                 logDebug('addGamesButtons() - #backToTables button added to bga-menu-bar-items');
             }
         }
@@ -392,8 +416,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         /* MENU : Button linking to the tournaments */
         if (document.querySelector('#tournamentsList') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="tournamentsList" class="bga-menu-bar-items__menu-item bga-link truncate svelte-yv59md" href="/tournamentlist">🏆 Tournois  </a>');
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="bga-menu-bar-items__menu-item bga-link truncate svelte-yv59md" href="/tournamentlist">🏆 </a>');
+                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="tournamentsList" class="' + nativeMenuLinkClass() + '" href="/tournamentlist">🏆 Tournois  </a>');
+                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="' + nativeMenuLinkClass() + '" href="/tournamentlist">🏆 </a>');
                 logDebug('addGamesButtons() - #tournamentsList button added');
             }
         }
@@ -437,7 +461,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (document.getElementById('notifsMobile') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
                 logDebug('addMobileGamesButtons() - not game page, #notifsMobile is null and .bga-menu-bar-items exists');
-                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/headlines"]').insertAdjacentHTML('afterend','<a id="notifsMobile" class="bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate svelte-yv59md" href="/playernotif"><div class="bga-menu-sub-menu-item__tree-icon svelte-yv59md"></div>🚨 Notifs</a>');
+                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/headlines"]').insertAdjacentHTML('afterend','<a id="notifsMobile" class="' + verticalMenuLinkClass() + '" href="/playernotif"><div class="' + treeIconClass() + '"></div>🚨 Notifs</a>');
                 logDebug('addMobileGamesButtons() - #notifsMobile button added');
             }
         }
@@ -446,7 +470,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (document.getElementById('newsFeedMobile') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
                 logDebug('addMobileGamesButtons() - not game page, #newsFeedMobile is null and .bga-menu-bar-items exists');
-                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/headlines"]').insertAdjacentHTML('afterend','<a id="newsFeedMobile" class="bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate svelte-yv59md" href="/player?section=recent"><div class="bga-menu-sub-menu-item__tree-icon svelte-yv59md"></div> <div class="bga-menu-sub-menu-item__tree-icon-cont svelte-yv59md"></div>📰 Feed</a>');
+                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/headlines"]').insertAdjacentHTML('afterend','<a id="newsFeedMobile" class="' + verticalMenuLinkClass() + '" href="/player?section=recent"><div class="' + treeIconClass() + '"></div> <div class="' + treeIconContClass() + '"></div>📰 Feed</a>');
                 logDebug('addMobileGamesButtons() - #newsFeedMobile button added');
             }
         }
@@ -455,7 +479,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (document.getElementById('tablesMobile') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
                 logDebug('addMobileGamesButtons() - not game page, #tablesMobile is null and .bga-menu-bar-items exists');
-                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/lobby"]').insertAdjacentHTML('afterend','<a id="tablesMobile" class="bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate svelte-yv59md" href="/gameinprogress"><div class="bga-menu-sub-menu-item__tree-icon svelte-yv59md"></div> 🎲 Tables</a>');
+                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/lobby"]').insertAdjacentHTML('afterend','<a id="tablesMobile" class="' + verticalMenuLinkClass() + '" href="/gameinprogress"><div class="' + treeIconClass() + '"></div> 🎲 Tables</a>');
                 logDebug('addMobileGamesButtons() - #tablesMobile button added');
             }
         }
@@ -464,7 +488,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (document.getElementById('tournamentsListMobile') === null) {
             if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
                 logDebug('addMobileGamesButtons() - not game page, #tournamentsListMobile is null and .bga-menu-bar-items exists');
-                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/lobby"]').insertAdjacentHTML('afterend','<a id="tournamentsListMobile" class="bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate svelte-yv59md" href="/tournamentlist"><div class="bga-menu-sub-menu-item__tree-icon svelte-yv59md"></div> <div class="bga-menu-sub-menu-item__tree-icon-cont svelte-yv59md"></div>🏆 Tournois</a>');
+                document.querySelector('.bga-menu-bar-items.bga-vertical').querySelector('[href="/lobby"]').insertAdjacentHTML('afterend','<a id="tournamentsListMobile" class="' + verticalMenuLinkClass() + '" href="/tournamentlist"><div class="' + treeIconClass() + '"></div> <div class="' + treeIconContClass() + '"></div>🏆 Tournois</a>');
                 logDebug('addMobileGamesButtons() - #tournamentsListMobile button added');
             }
         }
