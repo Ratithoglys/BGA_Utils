@@ -329,7 +329,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     }
     function verticalMenuLinkClass() {
         const suffix = svelteSuffix();
-        return 'bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item-eb truncate' + (suffix ? ' ' + suffix : '');
+        // bga-menu-sub-menu-item (classe native) : fond bleu + texte blanc,
+        // sans elle les traits blancs de l'arbre sont invisibles sur fond gris.
+        return 'bga-menu-bar-items__menu-item bga-link bga-menu-sub-menu-item bga-menu-sub-menu-item-eb truncate' + (suffix ? ' ' + suffix : '');
     }
     function treeIconClass() {
         const suffix = svelteSuffix();
