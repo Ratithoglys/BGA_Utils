@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.40
+// @version      0.41
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -356,7 +356,61 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 gameElement.style.backgroundColor = '#ffc0cb'; // Appliquer le fond rose
             }
         });
+
+        // Boutons de tri + tri par défaut (par nom)
+        addPlayerSortButtons();
+        sortPlayerGames('name');
         logDebug('checkPlayerGameForUnknown() - END');
+    }
+
+    /* PROFIL > Prestige/XP : tri de la liste des jeux par nom ou par ELO.
+       Tri par défaut : par nom. Les boutons sont insérés en haut de la
+       liste, à gauche du lien des awards (#pagesection_prestige .pagesection_link). */
+    function sortPlayerGames(by) {
+        logDebug('sortPlayerGames() - START', by);
+        const gameElements = document.querySelectorAll('.palmares_game');
+        if (gameElements.length === 0) return;
+        const container = gameElements[0].parentNode;
+
+        const games = [];
+        gameElements.forEach(element => {
+            const gameName = element.querySelector('.gamename')?.textContent.trim() ?? '';
+            const gameEloElement = element.querySelector('.gamerank_value');
+            const gameElo = gameEloElement ? parseInt(gameEloElement.textContent, 10) : NaN;
+            games.push({ element, gameName, eloValue: isNaN(gameElo) ? -9999 : gameElo });
+        });
+
+        if (by === 'elo') {
+            games.sort((a, b) => b.eloValue - a.eloValue);
+        } else {
+            games.sort((a, b) => a.gameName.localeCompare(b.gameName, 'fr', { sensitivity: 'base' }));
+        }
+
+        games.forEach(game => {
+            container.appendChild(game.element);
+        });
+        logDebug('sortPlayerGames() - END', by);
+    }
+
+    function addPlayerSortButtons() {
+        logDebug('addPlayerSortButtons() - START');
+        if (document.getElementById('eb-player-sortby-name')) return; // Boutons déjà présents
+        const awardsLink = document.querySelector('#pagesection_prestige .pagesection_link');
+        if (!awardsLink) return;
+
+        const wrapper = document.createElement('span');
+        wrapper.id = 'eb-player-sort';
+        const nameBtn = document.createElement('button');
+        nameBtn.id = 'eb-player-sortby-name';
+        nameBtn.textContent = 'Sort by Name';
+        nameBtn.addEventListener('click', () => sortPlayerGames('name'));
+        const eloBtn = document.createElement('button');
+        eloBtn.id = 'eb-player-sortby-elo';
+        eloBtn.textContent = 'Sort by ELO';
+        eloBtn.addEventListener('click', () => sortPlayerGames('elo'));
+        wrapper.append(nameBtn, ' ', eloBtn, ' ');
+        awardsLink.parentNode.insertBefore(wrapper, awardsLink);
+        logDebug('addPlayerSortButtons() - END');
     }
 
     /* GENERAL TOPBAR UI BUTTONS */
