@@ -464,6 +464,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             return;
         }
 
+        /* MENU */
         observer_mobilemenu.disconnect();
 
         const vertical = document.querySelector('.bga-menu-bar-items.bga-vertical');
