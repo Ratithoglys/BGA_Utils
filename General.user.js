@@ -836,9 +836,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             }
             else {
                 logDebug('gameTables_page_ui() - arena season running');
-                if (sortByEloOption) {
-                    logDebug('gameTables_page_ui() - removing sortByEloOption');
-                    sortByEloOption.remove();
+                /* Sort by ELO option (en arène aussi : permet de réafficher
+                   les jeux masqués par le tri Rank) */
+                if (sortMenu && !sortByEloOption) {
+                    addSortOption('favorite_sortby_elo', 'Sort by ELO', sortByElo, 'elo', 'desc');
                 }
 
                 /* Sort by Arena Ranking option */
