@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: Monster Factory
 // @namespace    https://ebumna.net/
-// @version      0.2
+// @version      0.3
 // @description  BoardGameArena: Games: Monster Factory
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/monsterfactory?table=*
@@ -16,9 +16,10 @@
 
     document.head.appendChild(document.createElement('style')).innerHTML = `
 .scrollerClass {
-    height: 800px;
+    height: 600px;
     min-height: 200px;
-    resize: vertical;
+    min-width: 200px;
+    resize: both;
     overflow-y: auto;
     overflow-x: hidden;
 }
