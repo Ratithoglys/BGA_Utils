@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.32
+// @version      0.33
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -21,6 +21,14 @@
     const logDebug = (...msgs) => {
         if (DEBUG) console.debug('BGA_GEN> ', msgs);
     };
+
+    // Page courante (BGA est une SPA : document.baseURI change sans rechargement)
+    const isGamePage = () => /boardgamearena\.com\/\d+\//.test(document.baseURI);
+    const isTutorialPage = () => /boardgamearena\.com\/tutorial\?/.test(document.baseURI);
+    const isGameOrTutorial = () => isGamePage() || isTutorialPage();
+    const isLobby = () => /boardgamearena\.com\/lobby/.test(document.baseURI);
+    const isGamelist = () => /boardgamearena\.com\/gamelist/.test(document.baseURI);
+    const isTablePage = () => /boardgamearena\.com\/\d+\/.*?\?table=.*/.test(document.baseURI);
 
     // let excludedGames = GM_getValue('excludedGames', []).map(entry => {
     //     return entry;
@@ -220,7 +228,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         observer_groups_wait.disconnect();
 
         // Hors lobby : on retire la boîte de filtrage et on arrête de surveiller les tables
-        if (!/boardgamearena\.com\/lobby/.test(document.baseURI)) {
+        if (!isLobby()) {
             observer_gametables.disconnect();
             document.querySelector('#ebBox-GameTableMgr')?.remove();
         }
@@ -232,12 +240,12 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         observer_mobilemenu.observe(document.body, config_childs);
 
         // Marquage des favoris sur les listes de jeux
-        if (/boardgamearena\.com\/gamelist/.test(document.baseURI)) {
+        if (isGamelist()) {
             observer_favorite_games.observe(document.body, config_stree);
         }
 
         // Coloration du joueur (uniquement si on est sur une page de jeu)
-        if (/boardgamearena\.com\/\d+\/.*?\?table=.*/.test(document.baseURI)) {
+        if (isTablePage()) {
             observer_color.observe(document.body, config_stree);
         }
 
@@ -251,7 +259,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         }
 
         // Cas spécifique du Lobby
-        if (/boardgamearena\.com\/lobby/.test(document.baseURI)) {
+        if (isLobby()) {
             const lobbyInner = document.querySelector('#gamelobby_inner');
             if (lobbyInner) {
                 // S'il est déjà là (ex: rafraichissement direct de la page F5)
@@ -372,7 +380,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         logDebug('addGamesButtons() - START');
 
         /* GAMES : Button linking to the game page and tutorial, tournament/arena/friendly info */
-        if (/boardgamearena\.com\/\d+\//.test(document.baseURI) && document.querySelector('#game-logo') == null) {
+        if (isGamePage() && document.querySelector('#game-logo') == null) {
             logDebug('addGamesButtons() - game page detected and #game-logo is null');
             if (typeof gameui === 'undefined' || gameui.game_name == "" || gameui.game_display_name == "") {
                 logDebug('addGamesButtons() - gameui is undefined or game info is empty, returning');
@@ -387,7 +395,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
         /* MENU : Button linking to the notifications */
         if (document.querySelector('#notifications') === null) {
-            if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
+            if (!isGamePage() && document.querySelector('.bga-menu-bar-items') !== null) {
                 insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="notifications" class="' + nativeMenuLinkClass() + '" href="/playernotif">🚨 Notifs  </a>');
                 insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="' + nativeMenuLinkClass() + '" href="/playernotif">🚨 </a>');
                 logDebug('addGamesButtons() - #notifications button added');
@@ -396,7 +404,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
         /* MENU : Button linking to the personnal feed */
         if (document.querySelector('#newsFeed') === null) {
-            if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
+            if (!isGamePage() && document.querySelector('.bga-menu-bar-items') !== null) {
                 insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="newsFeed" class="' + nativeMenuLinkClass() + '" href="/player?section=recent">📰 Feed  </a>');
                 insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="' + nativeMenuLinkClass() + '" href="/player?section=recent">📰 </a>');
                 logDebug('addGamesButtons() - #newsFeed button added');
@@ -405,12 +413,12 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
         /* GAMES / MENU : Button linking to the current tables */
         if (document.querySelector('#backToTables') === null) {
-            if ((/boardgamearena\.com\/\d+\//.test(document.baseURI) || /boardgamearena\.com\/tutorial\?/.test(document.baseURI)) && document.querySelector('#upperrightmenu') !== null) {
+            if (isGameOrTutorial() && document.querySelector('#upperrightmenu') !== null) {
                 logDebug('addGamesButtons() > 🎲 Table > topbar_content');
                 document.querySelector('#upperrightmenu').insertAdjacentHTML('afterbegin', '<div class="upperrightmenu_item"><a id="backToTables" class="self-center globalaction" href="/gameinprogress"><span style="font-size:1.5em; border: 1px solid black; padding: 3px; background-color: #4871b6; border-radius: 6px">🎲</span></a></div>');
                 logDebug('addGamesButtons() - #backToTables button added to upperrightmenu');
             }
-            else if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
+            else if (!isGamePage() && document.querySelector('.bga-menu-bar-items') !== null) {
                 logDebug('addGamesButtons() > 🚫 Table > no #refreshPlayersBtn > bga-menu-bar-items');
                 insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="backToTables" class="' + nativeMenuLinkClass() + '" href="/gameinprogress">🎲 Tables  </a>');
                 insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="' + nativeMenuLinkClass() + '" href="/gameinprogress">🎲 </a>');
@@ -420,7 +428,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
         /* MENU : Button linking to the tournaments */
         if (document.querySelector('#tournamentsList') === null) {
-            if (/boardgamearena\.com\/\d+\//.test(document.baseURI) == false && document.querySelector('.bga-menu-bar-items') !== null) {
+            if (!isGamePage() && document.querySelector('.bga-menu-bar-items') !== null) {
                 insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="tournamentsList" class="' + nativeMenuLinkClass() + '" href="/tournamentlist">🏆 Tournois  </a>');
                 insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="' + nativeMenuLinkClass() + '" href="/tournamentlist">🏆 </a>');
                 logDebug('addGamesButtons() - #tournamentsList button added');
@@ -429,7 +437,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
         /* GAMES / MENU : Button linking to FR version */
         if (document.querySelector('#langFR') === null) {
-            if ((/boardgamearena\.com\/\d+\//.test(document.baseURI) || /boardgamearena\.com\/tutorial\?/.test(document.baseURI)) && document.querySelector('#upperrightmenu') !== null) {
+            if (isGameOrTutorial() && document.querySelector('#upperrightmenu') !== null) {
                 let prm = new URLSearchParams(window.location.search);
                 prm.set('lang','fr');
                 document.querySelector('#upperrightmenu').insertAdjacentHTML('afterbegin', '<div class="upperrightmenu_item"><a id="langFR" class="self-center globalaction" href="?' + prm.toString() + '"><span style="font-size:1.5em; border: 1px solid black; padding: 3px; background-color: #c9c9c9; border-radius: 6px">FR</span></a></div>');
@@ -439,7 +447,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
         /* Sur une page de jeu / tutoriel : on coupe l'observateur dès que les
            deux boutons du #upperrightmenu sont posés. */
-        const onGameOrTutorial = /boardgamearena\.com\/\d+\//.test(document.baseURI) || /boardgamearena\.com\/tutorial\?/.test(document.baseURI);
+        const onGameOrTutorial = isGameOrTutorial();
         if (onGameOrTutorial && document.querySelector('#backToTables') !== null && document.querySelector('#langFR') !== null) {
             observer_menu.disconnect();
             logDebug('observer_menu - disconnected (game page buttons present)');
@@ -470,7 +478,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         observer_mobilemenu.disconnect();
 
         const vertical = document.querySelector('.bga-menu-bar-items.bga-vertical');
-        const notGamePage = !/boardgamearena\.com\/\d+\//.test(document.baseURI);
+        const notGamePage = !isGamePage();
 
         /* MENU : Button linking personnal notification */
         if (document.getElementById('notifsMobile') === null && notGamePage) {
@@ -501,7 +509,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     /* FAVORITE GAMES HIGHLIGHTING */
     let favGamesTimeout = null;
     function favoriteGames_loop() {
-        if (!/boardgamearena\.com\/gamelist/.test(document.baseURI)) return;
+        if (!isGamelist()) return;
 
         // Anti-spam (Debounce) : on attend que le DOM se calme 300ms avant de lancer le traitement
         if (favGamesTimeout) {
@@ -568,7 +576,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     function betterPlayerColorNotification() {
         logDebug('betterPlayerColorNotification() - START');
 
-        if (!/boardgamearena\.com\/\d+\/.*?\?table=.*/.test(document.baseURI)) {
+        if (!isTablePage()) {
             logDebug('betterPlayerColorNotification() - not in game table, disconnecting observer_color');
             observer_color.disconnect();
             return;
@@ -596,7 +604,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
     /* PLAY NOW */
     function playnow_loop() {
-        if (!/boardgamearena\.com\/lobby/.test(document.baseURI)) return;
+        if (!isLobby()) return;
 
         if (document.querySelector('#gamelobby_inner')) {
             logDebug('playnow_loop() - START');
@@ -610,7 +618,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     /** Tables **/
     function gameTables_page_ui() {
         logDebug('gameTables_page_ui() - START');
-        if (/boardgamearena\.com\/lobby/.test(document.baseURI)) {
+        if (isLobby()) {
             logDebug('gameTables_page_ui() - lobby page detected');
             const sortMenu = document.getElementById('favorite_sort_menu_title').nextElementSibling;
             const sortbySection = sortMenu.querySelector('.sortby_section');
