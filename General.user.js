@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.36
+// @version      0.37
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -651,8 +651,12 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 sortByPopularity.remove();
             }
 
-            if (!document.querySelector('#arena-season-end').checkVisibility() && document.querySelector('#ebBox-GameTableMgr') == null) {
-                logDebug('gameTables_page_ui() - arena season not ended and #ebBox-GameTableMgr is null');
+            // Arena season state: #arena-season-end is visible while a season is running
+            // (null-safe: if BGA ever removes the element, fall back to ELO sorting)
+            const arenaSeasonRunning = document.querySelector('#arena-season-end')?.checkVisibility() ?? false;
+
+            if (!arenaSeasonRunning) {
+                logDebug('gameTables_page_ui() - arena season not running');
                 if (sortByArenaRankOption) {
                     logDebug('gameTables_page_ui() - removing sortByArenaRankOption');
                     sortByArenaRankOption.remove();
@@ -671,21 +675,23 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 }
 
                 /* Filtering popup */
-                addBox('GameTableMgr');
-                addBoxBtn('GameTableMgr', 'Show 0 tables', () => expandTables('.gamerank_beginner'));
-                addBoxBtn('GameTableMgr', 'Hide 0 tables', () => collapseTables('.gamerank_beginner'));
-                addBoxBtn('GameTableMgr', 'Show 1-100 tables', () => expandTables('.gamerank_apprentice'));
-                addBoxBtn('GameTableMgr', 'Hide 1-100 tables', () => collapseTables('.gamerank_apprentice'));
-                addBoxBtn('GameTableMgr', 'Show Alpha tables', () => expandTables('.alpha_game'));
-                addBoxBtn('GameTableMgr', 'Hide Alpha tables', () => collapseTables('.alpha_game'));
-                addBoxBtn('GameTableMgr', 'Show Beta tables', () => expandTables('.beta_game'));
-                addBoxBtn('GameTableMgr', 'Hide Beta tables', () => collapseTables('.beta_game'));
-                addBoxBtn('GameTableMgr', 'Hide all', collapseAllTables);
-                addBoxBtn('GameTableMgr', 'Order ELO', sortByElo);
-                logDebug('gameTables_page_ui() - GameTableMgr box added');
+                if (document.querySelector('#ebBox-GameTableMgr') == null) {
+                    addBox('GameTableMgr');
+                    addBoxBtn('GameTableMgr', 'Show 0 tables', () => expandTables('.gamerank_beginner'));
+                    addBoxBtn('GameTableMgr', 'Hide 0 tables', () => collapseTables('.gamerank_beginner'));
+                    addBoxBtn('GameTableMgr', 'Show 1-100 tables', () => expandTables('.gamerank_apprentice'));
+                    addBoxBtn('GameTableMgr', 'Hide 1-100 tables', () => collapseTables('.gamerank_apprentice'));
+                    addBoxBtn('GameTableMgr', 'Show Alpha tables', () => expandTables('.alpha_game'));
+                    addBoxBtn('GameTableMgr', 'Hide Alpha tables', () => collapseTables('.alpha_game'));
+                    addBoxBtn('GameTableMgr', 'Show Beta tables', () => expandTables('.beta_game'));
+                    addBoxBtn('GameTableMgr', 'Hide Beta tables', () => collapseTables('.beta_game'));
+                    addBoxBtn('GameTableMgr', 'Hide all', collapseAllTables);
+                    addBoxBtn('GameTableMgr', 'Order ELO', sortByElo);
+                    logDebug('gameTables_page_ui() - GameTableMgr box added');
+                }
             }
-            else if (document.querySelector('#arena-season-end').checkVisibility() && document.querySelector('#ebBox-GameTableMgr') != null) {
-                logDebug('gameTables_page_ui() - arena season ended and #ebBox-GameTableMgr exists');
+            else {
+                logDebug('gameTables_page_ui() - arena season running');
                 if (sortByEloOption) {
                     logDebug('gameTables_page_ui() - removing sortByEloOption');
                     sortByEloOption.remove();
@@ -703,8 +709,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                     sortByRankMenuItem.click();
                 }
 
-                logDebug('gameTables_page_ui() - removing #ebBox-GameTableMgr');
-                document.querySelector('#ebBox-GameTableMgr').remove();
+                const gameTableMgrBox = document.querySelector('#ebBox-GameTableMgr');
+                if (gameTableMgrBox) {
+                    logDebug('gameTables_page_ui() - removing #ebBox-GameTableMgr');
+                    gameTableMgrBox.remove();
+                }
             }
         }
         else if (/boardgamearena\.com\/player\?section=prestige/.test(document.baseURI)) {
