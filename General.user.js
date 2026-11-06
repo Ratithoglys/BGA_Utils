@@ -1005,7 +1005,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     /* ARENE > Badge ELO natif sur les jeux : en arène, l'ELO (.myelo_value)
        est dans le masque au survol (.wannaplay_mask_button), donc invisible
        au repos — on clone le badge natif (mêmes classes, icône laurier
-       comprise) à côté de la ligue, visible en permanence. */
+       comprise) au-dessus de la ligue, visible en permanence. */
     function addArenaEloBadges() {
         logDebug('addArenaEloBadges() - START');
         document.querySelectorAll('.game_box_wrap.initial_favorite').forEach(element => {
@@ -1023,10 +1023,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 clone.removeAttribute('id'); // Pas de doublon d'id
                 clone.removeAttribute('style'); // Le positionnement du masque ne vaut pas ici
                 clone.classList.add('eb-arena-elo-clone');
+                clone.style.position = 'relative'; // En flux, au-dessus de la ligue (pas en absolu dessus)
                 clone.style.display = 'block';
                 clone.style.visibility = 'visible';
                 clone.style.opacity = '1';
-                leagueEl.after(clone);
+                leagueEl.before(clone);
             }
             const cloneValue = clone.querySelector('.myelo_value');
             if (cloneValue) cloneValue.textContent = elo;
