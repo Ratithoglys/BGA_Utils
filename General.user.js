@@ -1005,7 +1005,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     /* ARENE > Badge ELO natif sur les jeux : en arène, l'ELO (.myelo_value)
        est dans le masque au survol (.wannaplay_mask_button), donc invisible
        au repos — on clone le badge natif (mêmes classes, icône laurier
-       comprise) au-dessus de la ligue, visible en permanence. */
+       comprise) au-dessus de la ligue, visible en permanence.
+       Géométrie du coin (sonde 06/11, boîte 143x168) : ligue 40x40 à y=28,
+       clone 24x24 en flux à y=36 — il tient au-dessus (y=2..26) avec 2px
+       d'écart. Le clone est inséré APRÈS la ligue (peint dessus : l'ordre
+       DOM = l'ordre de peinture) puis remonté par translateY calculé. */
     function addArenaEloBadges() {
         logDebug('addArenaEloBadges() - START');
         document.querySelectorAll('.game_box_wrap.initial_favorite').forEach(element => {
@@ -1023,11 +1027,22 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 clone.removeAttribute('id'); // Pas de doublon d'id
                 clone.removeAttribute('style'); // Le positionnement du masque ne vaut pas ici
                 clone.classList.add('eb-arena-elo-clone');
-                clone.style.position = 'relative'; // En flux, au-dessus de la ligue (pas en absolu dessus)
+                clone.style.position = 'relative'; // En flux dans le coin
                 clone.style.display = 'block';
                 clone.style.visibility = 'visible';
                 clone.style.opacity = '1';
-                leagueEl.before(clone);
+                leagueEl.after(clone); // Après la ligue : peint dessus
+            }
+            if (!clone.style.transform) {
+                // Placement au-dessus de la ligue : le clone monte juste
+                // au-dessus du sommet de l'hexagone (2px d'écart).
+                const leagueRect = leagueEl.getBoundingClientRect();
+                const cloneRect = clone.getBoundingClientRect();
+                if (cloneRect.width > 0 && leagueRect.width > 0) {
+                    const dy = (leagueRect.top - cloneRect.height - 2) - cloneRect.top;
+                    clone.style.transform = 'translateY(' + dy + 'px)';
+                }
+                // Sinon (boîte masquée par le tri Rank) : on réessaiera au prochain passage.
             }
             const cloneValue = clone.querySelector('.myelo_value');
             if (cloneValue) cloneValue.textContent = elo;
