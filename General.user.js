@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.38
+// @version      0.39
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -464,7 +464,6 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             return;
         }
 
-        /* MENU : Button linking personnal notification */
         observer_mobilemenu.disconnect();
 
         const vertical = document.querySelector('.bga-menu-bar-items.bga-vertical');
@@ -669,10 +668,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 }
 
                 //Simulate a click on the "Sort by ELO" menu item after the page loads
-                const sortByELOMenuItem = document.getElementById('favorite_sortby_rank'); // This is actually rank, should be elo ?
+                const sortByELOMenuItem = document.getElementById('favorite_sortby_elo');
                 if (sortByELOMenuItem && !sortByELOMenuItem.classList.contains('selected')) {
-                    logDebug('gameTables_page_ui() - simulating click on sortByELOMenuItem (which is actually rank)');
-                    sortByELOMenuItem.click(); // Simulate click on "Sort by Rank" which is present by default
+                    logDebug('gameTables_page_ui() - simulating click on sortByELOMenuItem');
+                    sortByELOMenuItem.click();
                 }
 
                 /* Filtering popup */
@@ -799,7 +798,6 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             } else {
                 return b.rank - a.rank; // Sort by rank (descending - note that for league_5 label is inverted)
             }
-            return b.rank - a.rank;
         });
 
         // Re-append the elements to the container in the new order
