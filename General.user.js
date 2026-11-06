@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.41
+// @version      0.42
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -207,6 +207,14 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     /* PROFIL > Prestige/XP : fond rose sur les jeux non connus */
     const observer_player_games = new MutationObserver(checkPlayerGameForUnknown);
 
+    /* Tri bidirectionnel (0.42) : sens courant de chaque tri. Le clic sur le
+       contrôle actif inverse le sens, le clic sur un autre contrôle repart
+       sur son sens par défaut (ELO et Rank : descendant, Nom : ascendant). */
+    let lobbySortKey = null; // 'elo' | 'rank' | null
+    let lobbySortDir = 'desc';
+    let playerSortKey = 'name'; // 'name' | 'elo' — tri par défaut : par nom
+    let playerSortDir = 'asc';
+
     /* LOBBY > Attend que #gamelobby_inner apparaisse avant de le surveiller */
     const observer_lobby_wait = new MutationObserver((mutations, obs) => {
         const lobbyInner = document.querySelector('#gamelobby_inner');
@@ -358,15 +366,16 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
         // Boutons de tri + tri par défaut (par nom)
         addPlayerSortButtons();
-        sortPlayerGames('name');
+        sortPlayerGames();
+        updatePlayerSortIndicators();
         logDebug('checkPlayerGameForUnknown() - END');
     }
 
     /* PROFIL > Prestige/XP : tri de la liste des jeux par nom ou par ELO.
        Tri par défaut : par nom. Les boutons sont insérés dans le titre de
        section (h3.pagesection__title), après le badge XP, avec un séparateur. */
-    function sortPlayerGames(by) {
-        logDebug('sortPlayerGames() - START', by);
+    function sortPlayerGames() {
+        logDebug('sortPlayerGames() - START', playerSortKey, playerSortDir);
         const gameElements = document.querySelectorAll('.palmares_game');
         if (gameElements.length === 0) return;
         const container = gameElements[0].parentNode;
@@ -379,16 +388,38 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             games.push({ element, gameName, eloValue: isNaN(gameElo) ? -9999 : gameElo });
         });
 
-        if (by === 'elo') {
-            games.sort((a, b) => b.eloValue - a.eloValue);
+        if (playerSortKey === 'elo') {
+            games.sort((a, b) => playerSortDir === 'desc' ? b.eloValue - a.eloValue : a.eloValue - b.eloValue);
         } else {
-            games.sort((a, b) => a.gameName.localeCompare(b.gameName, 'fr', { sensitivity: 'base' }));
+            games.sort((a, b) => playerSortDir === 'desc' ? b.gameName.localeCompare(a.gameName, 'fr', { sensitivity: 'base' }) : a.gameName.localeCompare(b.gameName, 'fr', { sensitivity: 'base' }));
         }
 
         games.forEach(game => {
             container.appendChild(game.element);
         });
-        logDebug('sortPlayerGames() - END', by);
+        logDebug('sortPlayerGames() - END', playerSortKey, playerSortDir);
+    }
+
+    /* Clic sur un bouton de tri de la page Prestige/XP : inverse le sens si
+       ce tri est déjà actif, sinon repart sur son sens par défaut. */
+    function togglePlayerSort(key, defaultDir) {
+        if (playerSortKey === key) {
+            playerSortDir = playerSortDir === 'desc' ? 'asc' : 'desc';
+        } else {
+            playerSortKey = key;
+            playerSortDir = defaultDir;
+        }
+        updatePlayerSortIndicators();
+    }
+
+    /* Indicateur de sens (▲ ascendant / ▼ descendant) sur le bouton actif,
+       libellé neutre sur l'autre. */
+    function updatePlayerSortIndicators() {
+        const arrow = playerSortDir === 'desc' ? ' ▼' : ' ▲';
+        const nameBtn = document.getElementById('eb-player-sortby-name');
+        if (nameBtn) nameBtn.textContent = nameBtn.textContent.replace(/ [▲▼]$/, '') + (playerSortKey === 'name' ? arrow : '');
+        const eloBtn = document.getElementById('eb-player-sortby-elo');
+        if (eloBtn) eloBtn.textContent = eloBtn.textContent.replace(/ [▲▼]$/, '') + (playerSortKey === 'elo' ? arrow : '');
     }
 
     function addPlayerSortButtons() {
@@ -404,11 +435,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         const nameBtn = document.createElement('button');
         nameBtn.id = 'eb-player-sortby-name';
         nameBtn.textContent = 'Sort by Name';
-        nameBtn.addEventListener('click', () => sortPlayerGames('name'));
+        nameBtn.addEventListener('click', () => { togglePlayerSort('name', 'asc'); sortPlayerGames(); });
         const eloBtn = document.createElement('button');
         eloBtn.id = 'eb-player-sortby-elo';
         eloBtn.textContent = 'Sort by ELO';
-        eloBtn.addEventListener('click', () => sortPlayerGames('elo'));
+        eloBtn.addEventListener('click', () => { togglePlayerSort('elo', 'desc'); sortPlayerGames(); });
         wrapper.append(separator, nameBtn, ' ', eloBtn);
         title.appendChild(wrapper); // Après le badge XP, dans le titre de section
         logDebug('addPlayerSortButtons() - END');
@@ -721,7 +752,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
             /* Crée une option de tri ("Sort by ELO" / "Sort by Rank") : même
                création d'élément, même clic (tri + coche + sélection). */
-            function addSortOption(id, label, sortFn) {
+            function addSortOption(id, label, sortFn, sortKey, defaultDir) {
                 logDebug('gameTables_page_ui() - creating sort option', id);
                 const newMenuItem = document.createElement('a');
                 newMenuItem.href = '#';
@@ -732,6 +763,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 newMenuItem.addEventListener('click', function(event) {
                     logDebug('gameTables_page_ui() - sort option clicked', id);
                     event.preventDefault();
+                    toggleLobbySort(sortKey, defaultDir);
                     sortFn();
 
                     // Update menu item selection visually
@@ -749,7 +781,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                     // Add the checkmark icon to the newly selected item
                     newMenuItem.classList.add('selected');
                     newMenuItem.classList.remove('notselected');
-                    newMenuItem.innerHTML = label + ' <i class="fa fa-check" aria-hidden="true"></i>';
+                    updateLobbySortIndicators();
                 });
 
                 // Insert the new menu item before "Sort by name"
@@ -776,7 +808,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
                 /* Sort by ELO option */
                 if (sortMenu && !sortByEloOption) {
-                    addSortOption('favorite_sortby_elo', 'Sort by ELO', sortByElo);
+                    addSortOption('favorite_sortby_elo', 'Sort by ELO', sortByElo, 'elo', 'desc');
                 }
 
                 //Simulate a click on the "Sort by ELO" menu item after the page loads
@@ -798,7 +830,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                     addBoxBtn('GameTableMgr', 'Show Beta tables', () => expandTables('.beta_game'));
                     addBoxBtn('GameTableMgr', 'Hide Beta tables', () => collapseTables('.beta_game'));
                     addBoxBtn('GameTableMgr', 'Hide all', collapseAllTables);
-                    addBoxBtn('GameTableMgr', 'Order ELO', sortByElo);
+                    addBoxBtn('GameTableMgr', 'Order ELO', () => { toggleLobbySort('elo', 'desc'); sortByElo(); updateLobbySortIndicators(); });
                     logDebug('gameTables_page_ui() - GameTableMgr box added');
                 }
             }
@@ -811,7 +843,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
                 /* Sort by Arena Ranking option */
                 if (sortMenu && !sortByArenaRankOption) {
-                    addSortOption('favorite_sortby_rank', 'Sort by Rank', sortByArenaRank);
+                    addSortOption('favorite_sortby_rank', 'Sort by Rank', sortByArenaRank, 'rank', 'desc');
                 }
 
                 //Simulate a click on the "Sort by Rank" menu item after the page loads
@@ -835,8 +867,38 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     function collapseAllTables() {
         document.querySelectorAll('#favorite_expanded .expandedgame_box_wrap').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
     }
+    /* Clic sur un contrôle de tri du lobby : inverse le sens si ce tri est
+       déjà actif, sinon repart sur son sens par défaut. */
+    function toggleLobbySort(key, defaultDir) {
+        if (lobbySortKey === key) {
+            lobbySortDir = lobbySortDir === 'desc' ? 'asc' : 'desc';
+        } else {
+            lobbySortKey = key;
+            lobbySortDir = defaultDir;
+        }
+    }
+
+    /* Indicateur de sens (▲ ascendant / ▼ descendant) sur le contrôle actif,
+       libellé neutre sur les autres. La coche de sélection est préservée. */
+    function updateLobbySortIndicators() {
+        const arrow = lobbySortDir === 'desc' ? ' ▼' : ' ▲';
+        [['favorite_sortby_elo', 'elo'], ['favorite_sortby_rank', 'rank']].forEach(([id, key]) => {
+            const item = document.getElementById(id);
+            if (!item) return;
+            const base = item.textContent.replace(/ [▲▼]$/, '');
+            const check = item.classList.contains('selected') ? ' <i class="fa fa-check" aria-hidden="true"></i>' : '';
+            item.innerHTML = base + (lobbySortKey === key ? arrow : '') + check;
+        });
+        // Bouton "Order ELO" de la boîte GameTableMgr
+        document.querySelectorAll('#ebBox-GameTableMgr .ebBoButton').forEach(btn => {
+            if (btn.textContent.trim().startsWith('Order ELO')) {
+                btn.textContent = 'Order ELO' + (lobbySortKey === 'elo' ? arrow : '');
+            }
+        });
+    }
+
     function sortByElo() {
-        logDebug('sortByElo() - START');
+        logDebug('sortByElo() - START', lobbySortDir);
         const gameElements = document.querySelectorAll('.game_box_wrap.initial_favorite');
         const container = document.getElementById('favorite_games_list');
 
@@ -848,8 +910,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             games.push({ element, eloValue: isNaN(gameElo) ? -9999 : gameElo });
         });
 
-        // Trier en utilisant eloValue
-        games.sort((a, b) => b.eloValue - a.eloValue);
+        // Trier en utilisant eloValue (sens courant : lobbySortDir)
+        games.sort((a, b) => lobbySortDir === 'desc' ? b.eloValue - a.eloValue : a.eloValue - b.eloValue);
 
         // Réorganiser les éléments dans le conteneur
         games.forEach(game => {
@@ -858,7 +920,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         logDebug('sortByElo() - END');
     }
     function sortByArenaRank() {
-        logDebug('sortByArenaRank() - START');
+        logDebug('sortByArenaRank() - START', lobbySortDir);
         const gameElements = document.querySelectorAll('.game_box_wrap.initial_favorite');
         const container = document.getElementById('favorite_games_list');
 
@@ -896,12 +958,13 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             }
         });
 
-        // Tri par league puis rank (décroissant)
+        // Tri par league puis rank (sens courant : lobbySortDir)
+        const dir = lobbySortDir === 'desc' ? 1 : -1;
         games.sort((a, b) => {
             if (b.league !== a.league) {
-                return b.league - a.league; // Sort by league (descending)
+                return (b.league - a.league) * dir; // Sort by league
             } else {
-                return b.rank - a.rank; // Sort by rank (descending - note that for league_5 label is inverted)
+                return (b.rank - a.rank) * dir; // Sort by rank (note that for league_5 label is inverted)
             }
         });
 
