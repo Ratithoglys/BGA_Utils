@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.31
+// @version      0.32
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -17,7 +17,7 @@
     'use strict';
 
     // Enable for debugging
-    const DEBUG = false;
+    const DEBUG = true;
     const logDebug = (...msgs) => {
         if (DEBUG) console.debug('BGA_GEN> ', msgs);
     };
@@ -53,7 +53,8 @@
 
     document.head.appendChild(document.createElement('style')).innerHTML = `
 #pagemaintitletext { color: black; }
-#game-logo { top: 5px; margin: 0 6px; }
+#game-logo { top: 5px; margin: 0 6px; position: relative; }
+.eb-game-fav { position: absolute; top: 4px; right: -18px; font-size: 20px; line-height: 1; pointer-events: none; }
 #ebgame-tuto { font-size: 40px; }
 #ebgame-type { font-size: 40px; }
 #variant_wrap { background-color: #ccff00; }
@@ -217,6 +218,13 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     function init() {
         observer_lobby_wait.disconnect();
         observer_groups_wait.disconnect();
+
+        // Hors lobby : on retire la boîte de filtrage et on arrête de surveiller les tables
+        if (!/boardgamearena\.com\/lobby/.test(document.baseURI)) {
+            observer_gametables.disconnect();
+            document.querySelector('#ebBox-GameTableMgr')?.remove();
+        }
+
         logDebug('Initialisation des observers...');
 
         // On observe le body pour les menus et boutons globaux
@@ -323,6 +331,43 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         const suffix = svelteSuffix();
         return 'bga-menu-sub-menu-item__tree-icon-cont' + (suffix ? ' ' + suffix : '');
     }
+
+    /* Le jeu courant est-il dans les favoris ? Sur une table, le jeu tourne dans une
+   iframe : globalUserInfos est dans la fenêtre parente. */
+    function isFavoriteGame() {
+        try {
+            const top = (typeof unsafeWindow !== 'undefined' ? unsafeWindow : window).top;
+            return [true, 1, '1'].includes(top.globalUserInfos.game_list.find(g => g.name === gameui.game_name)?.favorite);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    /* TABLE : icône du type de partie à côté du logo : 🏆 tournoi, ⚔️ arène, 💙 friendly.
+   Tournoi et arène se lisent localement ; le friendly (option 201 = 1) demande au serveur. */
+    function markTableType() {
+        const tableId = new URLSearchParams(location.search).get('table');
+        if (!tableId || document.body.dataset.ebTableType === tableId) return; // une seule fois par table
+        document.body.dataset.ebTableType = tableId;
+
+        const setType = (html) => {
+            if (!document.querySelector('#ebgame-type')) {
+                document.querySelector('#site-logo').insertAdjacentHTML('beforebegin', '<div id="ebgame-type">' + html + '</div>');
+            }
+        };
+
+        if (gameui.tournament_id !== null) {
+            return setType('<a id="gametypeicon" href="/tournament?id=' + gameui.tournament_id + '#overview">🏆</a>');
+        }
+        if (document.body.classList.contains('arena_mode')) {
+            return setType('⚔️');
+        }
+
+        gameui.ajaxcall('/table/table/tableinfos.html', { id: tableId, lock: false }, gameui, (r) => {
+            if (String((r.data ?? r).options?.['201']?.value) === '1') setType('💙');
+        }, () => {}, 'get');
+    }
+
     function addGamesButtons() {
         logDebug('addGamesButtons() - START');
 
@@ -334,15 +379,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 return;
             }
 
-            document.querySelector('#site-logo').insertAdjacentHTML('beforebegin','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_display_name + '"></a></div> <div id="ebgame-tuto"><a id="gametutoicon" href="/tutorial?game=' + gameui.game_name + '">👨‍🎓</a></div>');
+            document.querySelector('#site-logo').insertAdjacentHTML('beforebegin','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_display_name + '"></a>' + (isFavoriteGame() ? '<span class="eb-game-fav">❤️</span>' : '') + '</div> <div id="ebgame-tuto"><a id="gametutoicon" href="/tutorial?game=' + gameui.game_name + '">👨‍🎓</a></div>');
             logDebug('addGamesButtons() - #game-logo button added');
 
-            if (gameui.tournament_id !== null) {
-                document.querySelector('#site-logo').insertAdjacentHTML('beforebegin','<div id="ebgame-type"><a id="gametypeicon" href="/tournament?id=' + gameui.tournament_id + '#overview">🏆</a></div>');
-            }
-            else if (document.body.classList.contains('arena_mode')) {
-                document.querySelector('#site-logo').insertAdjacentHTML('beforebegin','<div id="ebgame-type">⚔️</div>');
-            }
+            markTableType();
         }
 
         /* MENU : Button linking to the notifications */
