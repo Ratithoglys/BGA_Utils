@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.43
+// @version      0.45
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -858,6 +858,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                     logDebug('gameTables_page_ui() - removing #ebBox-GameTableMgr');
                     gameTableMgrBox.remove();
                 }
+
+                // Badge ELO visible sur les jeux (l'ELO natif est dans le masque au survol)
+                addArenaEloBadges();
             }
         }
         logDebug('gameTables_page_ui() - END');
@@ -996,6 +999,33 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         });
         logDebug('sortByArenaRank() - Tables sorted by Arena Rank');
         logDebug('sortByArenaRank() - END');
+    }
+
+    /* ARENE > Badge ELO sur les jeux : en arène, l'ELO (.myelo_value) est
+       dans le masque au survol (.wannaplay_mask_button), donc invisible au
+       repos — on ajoute un badge visible avec l'ELO à côté de la ligue. */
+    function addArenaEloBadges() {
+        logDebug('addArenaEloBadges() - START');
+        document.querySelectorAll('.game_box_wrap.initial_favorite').forEach(element => {
+            const eloEl = element.querySelector('.myelo_value');
+            if (!eloEl) return;
+            const elo = parseInt(eloEl.textContent, 10);
+            if (isNaN(elo)) return; // ELO invalide ("~~") : pas de badge
+            const leagueEl = element.querySelector('.myarena_league');
+            if (!leagueEl) return;
+            // Ancre : la ligue si elle est visible, sinon la boîte du jeu
+            const anchor = leagueEl.checkVisibility() ? leagueEl : element.querySelector('.game_box');
+            if (!anchor) return;
+            let badge = element.querySelector('.eb-arena-elo-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'eb-arena-elo-badge';
+                badge.style.cssText = 'display:inline-block;margin-left:4px;padding:0 5px;border-radius:8px;background:#333;color:#fff;font-size:11px;line-height:16px;vertical-align:middle;';
+                anchor.after(badge);
+            }
+            badge.textContent = 'ELO ' + elo;
+        });
+        logDebug('addArenaEloBadges() - END');
     }
 
     /** Tables ELO **/
