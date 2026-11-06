@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.34
+// @version      0.35
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -393,46 +393,34 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             markTableType();
         }
 
-        /* MENU : Button linking to the notifications */
-        if (document.querySelector('#notifications') === null) {
-            if (!isGamePage() && document.querySelector('.bga-menu-bar-items') !== null) {
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="notifications" class="' + nativeMenuLinkClass() + '" href="/playernotif">🚨 Notifs  </a>');
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="' + nativeMenuLinkClass() + '" href="/playernotif">🚨 </a>');
-                logDebug('addGamesButtons() - #notifications button added');
-            }
+        /* MENU : liens desktop + mobile (l'ordre du tableau est l'ordre
+           d'insertion ; l'insertion après le premier élément inverse
+           l'ordre à l'écran, comme avant) */
+        const menuButtons = [
+            ['notifications', '/playernotif', '🚨 Notifs  ', '🚨 '],
+            ['newsFeed', '/player?section=recent', '📰 Feed  ', '📰 '],
+            ['backToTables', '/gameinprogress', '🎲 Tables  ', '🎲 '],
+            ['tournamentsList', '/tournamentlist', '🏆 Tournois  ', '🏆 ']
+        ];
+        if (!isGamePage() && document.querySelector('.bga-menu-bar-items') !== null) {
+            menuButtons.forEach(([id, href, label, shortLabel]) => {
+                if (document.querySelector('#' + id) !== null) return;
+                // backToTables sur page tuto avec #upperrightmenu : le bouton va
+                // dans #upperrightmenu (bloc ci-dessous), pas dans le menu.
+                if (id === 'backToTables' && isTutorialPage() && document.querySelector('#upperrightmenu') !== null) return;
+                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'), '<a id="' + id + '" class="' + nativeMenuLinkClass() + '" href="' + href + '">' + label + '</a>');
+                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'), '<a class="' + nativeMenuLinkClass() + '" href="' + href + '">' + shortLabel + '</a>');
+                logDebug('addGamesButtons() - #' + id + ' button added');
+            });
         }
 
-        /* MENU : Button linking to the personnal feed */
-        if (document.querySelector('#newsFeed') === null) {
-            if (!isGamePage() && document.querySelector('.bga-menu-bar-items') !== null) {
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="newsFeed" class="' + nativeMenuLinkClass() + '" href="/player?section=recent">📰 Feed  </a>');
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="' + nativeMenuLinkClass() + '" href="/player?section=recent">📰 </a>');
-                logDebug('addGamesButtons() - #newsFeed button added');
-            }
-        }
-
-        /* GAMES / MENU : Button linking to the current tables */
-        if (document.querySelector('#backToTables') === null) {
-            if (isGameOrTutorial() && document.querySelector('#upperrightmenu') !== null) {
-                logDebug('addGamesButtons() > 🎲 Table > topbar_content');
-                document.querySelector('#upperrightmenu').insertAdjacentHTML('afterbegin', '<div class="upperrightmenu_item"><a id="backToTables" class="self-center globalaction" href="/gameinprogress"><span style="font-size:1.5em; border: 1px solid black; padding: 3px; background-color: #4871b6; border-radius: 6px">🎲</span></a></div>');
-                logDebug('addGamesButtons() - #backToTables button added to upperrightmenu');
-            }
-            else if (!isGamePage() && document.querySelector('.bga-menu-bar-items') !== null) {
-                logDebug('addGamesButtons() > 🚫 Table > no #refreshPlayersBtn > bga-menu-bar-items');
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="backToTables" class="' + nativeMenuLinkClass() + '" href="/gameinprogress">🎲 Tables  </a>');
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="' + nativeMenuLinkClass() + '" href="/gameinprogress">🎲 </a>');
-                logDebug('addGamesButtons() - #backToTables button added to bga-menu-bar-items');
-            }
-        }
-
-        /* MENU : Button linking to the tournaments */
-        if (document.querySelector('#tournamentsList') === null) {
-            if (!isGamePage() && document.querySelector('.bga-menu-bar-items') !== null) {
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'),'<a id="tournamentsList" class="' + nativeMenuLinkClass() + '" href="/tournamentlist">🏆 Tournois  </a>');
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'),'<a class="' + nativeMenuLinkClass() + '" href="/tournamentlist">🏆 </a>');
-                logDebug('addGamesButtons() - #tournamentsList button added');
-            }
+        /* GAMES / MENU : Button linking to the current tables (page de jeu / tuto :
+           le bouton 🎲 va dans #upperrightmenu, pas dans le menu — le lien
+           de menu est posé par la boucle ci-dessus) */
+        if (document.querySelector('#backToTables') === null && isGameOrTutorial() && document.querySelector('#upperrightmenu') !== null) {
+            logDebug('addGamesButtons() > 🎲 Table > topbar_content');
+            document.querySelector('#upperrightmenu').insertAdjacentHTML('afterbegin', '<div class="upperrightmenu_item"><a id="backToTables" class="self-center globalaction" href="/gameinprogress"><span style="font-size:1.5em; border: 1px solid black; padding: 3px; background-color: #4871b6; border-radius: 6px">🎲</span></a></div>');
+            logDebug('addGamesButtons() - #backToTables button added to upperrightmenu');
         }
 
         /* GAMES / MENU : Button linking to FR version */
@@ -480,29 +468,20 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         const vertical = document.querySelector('.bga-menu-bar-items.bga-vertical');
         const notGamePage = !isGamePage();
 
-        /* MENU : Button linking personnal notification */
-        if (document.getElementById('notifsMobile') === null && notGamePage) {
-            vertical.querySelector('[href="/headlines"]').insertAdjacentHTML('afterend','<a id="notifsMobile" class="' + verticalMenuLinkClass() + '" href="/playernotif"><div class="' + treeIconClass() + '"></div>🚨 Notifs</a>');
-            logDebug('addMobileGamesButtons() - #notifsMobile button added');
-        }
-
-        /* MENU : Button linking to personnal feed */
-        if (document.getElementById('newsFeedMobile') === null && notGamePage) {
-            vertical.querySelector('[href="/headlines"]').insertAdjacentHTML('afterend','<a id="newsFeedMobile" class="' + verticalMenuLinkClass() + '" href="/player?section=recent"><div class="' + treeIconClass() + '"></div> <div class="' + treeIconContClass() + '"></div>📰 Feed</a>');
-            logDebug('addMobileGamesButtons() - #newsFeedMobile button added');
-        }
-
-        /* MENU : Button linking to the tables */
-        if (document.getElementById('tablesMobile') === null && notGamePage) {
-            vertical.querySelector('[href="/lobby"]').insertAdjacentHTML('afterend','<a id="tablesMobile" class="' + verticalMenuLinkClass() + '" href="/gameinprogress"><div class="' + treeIconClass() + '"></div> 🎲 Tables</a>');
-            logDebug('addMobileGamesButtons() - #tablesMobile button added');
-        }
-
-        /* MENU : Button linking to the tournaments */
-        if (document.getElementById('tournamentsListMobile') === null && notGamePage) {
-            vertical.querySelector('[href="/lobby"]').insertAdjacentHTML('afterend','<a id="tournamentsListMobile" class="' + verticalMenuLinkClass() + '" href="/tournamentlist"><div class="' + treeIconClass() + '"></div> <div class="' + treeIconContClass() + '"></div>🏆 Tournois</a>');
-            logDebug('addMobileGamesButtons() - #tournamentsListMobile button added');
-        }
+        /* MENU : liens du menu vertical mobile (ancre et conteneur d'icône
+           diffèrent selon le bouton ; le libellé de Tables garde son espace) */
+        const mobileButtons = [
+            ['notifsMobile', '/playernotif', '🚨 Notifs', '/headlines', false],
+            ['newsFeedMobile', '/player?section=recent', '📰 Feed', '/headlines', true],
+            ['tablesMobile', '/gameinprogress', ' 🎲 Tables', '/lobby', false],
+            ['tournamentsListMobile', '/tournamentlist', '🏆 Tournois', '/lobby', true]
+        ];
+        mobileButtons.forEach(([id, href, label, anchor, withCont]) => {
+            if (document.getElementById(id) === null && notGamePage) {
+                vertical.querySelector('[href="' + anchor + '"]').insertAdjacentHTML('afterend', '<a id="' + id + '" class="' + verticalMenuLinkClass() + '" href="' + href + '"><div class="' + treeIconClass() + '"></div>' + (withCont ? ' <div class="' + treeIconContClass() + '"></div>' : '') + label + '</a>');
+                logDebug('addMobileGamesButtons() - #' + id + ' button added');
+            }
+        });
         logDebug('addMobileGamesButtons() - END');
     }
 
