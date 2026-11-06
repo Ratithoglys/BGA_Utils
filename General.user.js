@@ -1002,29 +1002,34 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         logDebug('sortByArenaRank() - END');
     }
 
-    /* ARENE > Badge ELO sur les jeux : en arène, l'ELO (.myelo_value) est
-       dans le masque au survol (.wannaplay_mask_button), donc invisible au
-       repos — on ajoute un badge visible avec l'ELO à côté de la ligue. */
+    /* ARENE > Badge ELO natif sur les jeux : en arène, l'ELO (.myelo_value)
+       est dans le masque au survol (.wannaplay_mask_button), donc invisible
+       au repos — on clone le badge natif (mêmes classes, icône laurier
+       comprise) à côté de la ligue, visible en permanence. */
     function addArenaEloBadges() {
         logDebug('addArenaEloBadges() - START');
         document.querySelectorAll('.game_box_wrap.initial_favorite').forEach(element => {
-            const eloEl = element.querySelector('.myelo_value');
-            if (!eloEl) return;
-            const elo = parseInt(eloEl.textContent, 10);
+            // Retirer l'ancienne pastille (0.45 v1) si elle existe encore
+            element.querySelectorAll('span.eb-arena-elo-badge').forEach(pill => pill.remove());
+            const eloBadgeEl = element.querySelector('.wannaplay_mask_button.myelo');
+            if (!eloBadgeEl) return;
+            const elo = parseInt(eloBadgeEl.querySelector('.myelo_value')?.textContent ?? '', 10);
             if (isNaN(elo)) return; // ELO invalide ("~~") : pas de badge
             const leagueEl = element.querySelector('.myarena_league');
             if (!leagueEl) return;
-            // Ancre : la ligue si elle est visible, sinon la boîte du jeu
-            const anchor = leagueEl.checkVisibility() ? leagueEl : element.querySelector('.game_box');
-            if (!anchor) return;
-            let badge = element.querySelector('.eb-arena-elo-badge');
-            if (!badge) {
-                badge = document.createElement('span');
-                badge.className = 'eb-arena-elo-badge';
-                badge.style.cssText = 'display:inline-block;margin-left:4px;padding:0 5px;border-radius:8px;background:#333;color:#fff;font-size:11px;line-height:16px;vertical-align:middle;';
-                anchor.after(badge);
+            let clone = element.querySelector('.eb-arena-elo-clone');
+            if (!clone) {
+                clone = eloBadgeEl.cloneNode(true);
+                clone.removeAttribute('id'); // Pas de doublon d'id
+                clone.removeAttribute('style'); // Le positionnement du masque ne vaut pas ici
+                clone.classList.add('eb-arena-elo-clone');
+                clone.style.display = 'block';
+                clone.style.visibility = 'visible';
+                clone.style.opacity = '1';
+                leagueEl.after(clone);
             }
-            badge.textContent = 'ELO ' + elo;
+            const cloneValue = clone.querySelector('.myelo_value');
+            if (cloneValue) cloneValue.textContent = elo;
         });
         logDebug('addArenaEloBadges() - END');
     }
