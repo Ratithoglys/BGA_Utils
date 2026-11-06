@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.33
+// @version      0.34
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -686,15 +686,15 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
                 /* Filtering popup */
                 addBox('GameTableMgr');
-                addBoxBtn('GameTableMgr', 'Show 0 tables', expandBeginnerTables);
-                addBoxBtn('GameTableMgr', 'Hide 0 tables', collapseBeginnerTables);
-                addBoxBtn('GameTableMgr', 'Show 1-100 tables', expandApprenticeTables);
-                addBoxBtn('GameTableMgr', 'Hide 1-100 tables', collapseApprenticeTables);
-                addBoxBtn('GameTableMgr', 'Show Alpha tables', expandAlphaTables);
-                addBoxBtn('GameTableMgr', 'Hide Alpha tables', collapseAlphaTables);
-                addBoxBtn('GameTableMgr', 'Show Beta tables', expandBetaTables);
-                addBoxBtn('GameTableMgr', 'Hide Beta tables', collapseBetaTables);
-                addBoxBtn('GameTableMgr', 'Hide all', collapseTables);
+                addBoxBtn('GameTableMgr', 'Show 0 tables', () => expandTables('.gamerank_beginner'));
+                addBoxBtn('GameTableMgr', 'Hide 0 tables', () => collapseTables('.gamerank_beginner'));
+                addBoxBtn('GameTableMgr', 'Show 1-100 tables', () => expandTables('.gamerank_apprentice'));
+                addBoxBtn('GameTableMgr', 'Hide 1-100 tables', () => collapseTables('.gamerank_apprentice'));
+                addBoxBtn('GameTableMgr', 'Show Alpha tables', () => expandTables('.alpha_game'));
+                addBoxBtn('GameTableMgr', 'Hide Alpha tables', () => collapseTables('.alpha_game'));
+                addBoxBtn('GameTableMgr', 'Show Beta tables', () => expandTables('.beta_game'));
+                addBoxBtn('GameTableMgr', 'Hide Beta tables', () => collapseTables('.beta_game'));
+                addBoxBtn('GameTableMgr', 'Hide all', collapseAllTables);
                 addBoxBtn('GameTableMgr', 'Order ELO', sortByElo);
                 logDebug('gameTables_page_ui() - GameTableMgr box added');
             }
@@ -763,31 +763,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         }
         logDebug('gameTables_page_ui() - END');
     }
-    function expandBeginnerTables() {
-        document.querySelectorAll('#favorite_games_list .gamerank_beginner').forEach(e => { e.closest('.wannaplay').querySelector('.game_box_image_wrap .game_box').click(); });
-    }
-    function collapseBeginnerTables() {
-        document.querySelectorAll('#favorite_expanded .gamerank_beginner').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
-    }
-    function expandApprenticeTables() {
-        document.querySelectorAll('#favorite_games_list .gamerank_apprentice').forEach(e => { e.closest('.wannaplay').querySelector('.game_box_image_wrap .game_box').click(); });
-    }
-    function collapseApprenticeTables() {
-        document.querySelectorAll('#favorite_expanded .gamerank_apprentice').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
-    }
-    function expandAlphaTables() {
-        document.querySelectorAll('#favorite_games_list .alpha_game').forEach(e => { e.closest('.wannaplay').querySelector('.game_box_image_wrap .game_box').click(); });
-    }
-    function collapseAlphaTables() {
-        document.querySelectorAll('#favorite_expanded .alpha_game').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
-    }
-    function expandBetaTables() {
-        document.querySelectorAll('#favorite_games_list .beta_game').forEach(e => { e.closest('.wannaplay').querySelector('.game_box_image_wrap .game_box').click(); });
-    }
-    function collapseBetaTables() {
-        document.querySelectorAll('#favorite_expanded .beta_game').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
-    }
-    function collapseTables() {
+    const expandTables = sel => document.querySelectorAll('#favorite_games_list ' + sel).forEach(e => { e.closest('.wannaplay').querySelector('.game_box_image_wrap .game_box').click(); });
+    const collapseTables = sel => document.querySelectorAll('#favorite_expanded ' + sel).forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
+    function collapseAllTables() {
         document.querySelectorAll('#favorite_expanded .expandedgame_box_wrap').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
     }
     function sortByElo() {
