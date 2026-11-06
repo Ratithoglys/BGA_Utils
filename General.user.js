@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.37
+// @version      0.38
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -554,6 +554,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
     /* GAMES */
     /** Player color **/
+    const applyStyles = (el, styles) => { if (el) Object.assign(el.style, styles); };
+
     function betterPlayerColorNotification() {
         logDebug('betterPlayerColorNotification() - START');
 
@@ -563,21 +565,20 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             return;
         }
 
-        if (document.querySelector('#pagemaintitletext') != null && document.querySelector('#player_boards > .current-player-board > div') != null) {
+        const titleText = document.querySelector('#pagemaintitletext');
+        const playerBoardInner = document.querySelector('#player_boards > .current-player-board > div');
+        if (titleText != null && playerBoardInner != null) {
             logDebug('betterPlayerColorNotification() - found #pagemaintitletext, disconnecting observer_color');
             observer_color.disconnect();
-            const userColor = document.querySelector('#player_boards > .current-player-board > div').id.replace('player_board_inner_','');
+            const userColor = playerBoardInner.id.replace('player_board_inner_','');
             logDebug('betterPlayerColorNotification() - userColor:', userColor);
 
-            document.querySelector('#active_player_statusbar_icon').style.backgroundColor = 'white';
-            document.querySelector('#active_player_statusbar_icon').style.borderRadius = '5px';
-            document.querySelector('#pagemaintitletext').style.backgroundColor = 'white';
-            document.querySelector('#pagemaintitletext').style.borderRadius = '5px';
-            document.querySelector('#pagemaintitletext').style.padding = '2px';
-            document.querySelector('#not_playing_help').style.backgroundColor = 'white';
-            document.querySelector('#not_playing_help').style.borderRadius = '5px';
-            document.querySelector('#page-title').style.backgroundColor = '#'+userColor;
-            document.querySelector('#pagemaintitle_wrap').style.backgroundColor = '#'+userColor;
+            const whiteBox = { backgroundColor: 'white', borderRadius: '5px' };
+            applyStyles(document.querySelector('#active_player_statusbar_icon'), whiteBox);
+            applyStyles(titleText, { ...whiteBox, padding: '2px' });
+            applyStyles(document.querySelector('#not_playing_help'), whiteBox);
+            applyStyles(document.querySelector('#page-title'), { backgroundColor: '#'+userColor });
+            applyStyles(document.querySelector('#pagemaintitle_wrap'), { backgroundColor: '#'+userColor });
             logDebug('betterPlayerColorNotification() - color styles applied');
         }
         logDebug('betterPlayerColorNotification() - END');
