@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.39
+// @version      0.40
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -205,6 +205,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     /* GAMES LIST > Favorite Heart */
     const observer_favorite_games = new MutationObserver(favoriteGames_loop);
 
+    /* PROFIL > Prestige/XP : fond rose sur les jeux non connus */
+    const observer_player_games = new MutationObserver(checkPlayerGameForUnknown);
+
     /* LOBBY > Attend que #gamelobby_inner apparaisse avant de le surveiller */
     const observer_lobby_wait = new MutationObserver((mutations, obs) => {
         const lobbyInner = document.querySelector('#gamelobby_inner');
@@ -226,6 +229,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     function init() {
         observer_lobby_wait.disconnect();
         observer_groups_wait.disconnect();
+        observer_player_games.disconnect();
 
         // Hors lobby : on retire la boîte de filtrage et on arrête de surveiller les tables
         if (!isLobby()) {
@@ -256,6 +260,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 logDebug('Groups Wait - En attente de #playergroups...');
                 observer_groups_wait.observe(document.body, config_stree);
             }
+
+            // Profil > Prestige/XP : jeux non connus en rose
+            observer_player_games.observe(document.body, config_stree);
+            checkPlayerGameForUnknown();
         }
 
         // Cas spécifique du Lobby
@@ -301,6 +309,54 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         container.dataset.ebGroupsListed = '1';
         logDebug('listPlayerGroups() -', links.length, 'groupes mis en liste');
         return true;
+    }
+
+    /* PROFIL > Prestige/XP : fond rose sur les jeux non connus
+       (page https://boardgamearena.com/player?id=XXX&section=prestige).
+       Rapatrié de GameInProgress 0.26 en 0.40. */
+    function checkPlayerGameForUnknown() {
+        logDebug('checkPlayerGameForUnknown() - START');
+        if (document.querySelector('#pagesection_prestige') == null) {
+            return;
+        }
+
+        observer_player_games.disconnect(); // Arrêter l'observateur pour éviter les boucles infinies pendant la modification
+
+        // Vérifier que les informations globales du joueur sont bien chargées
+        if (!window.globalUserInfos || !globalUserInfos.game_list) {
+            logDebug('checkPlayerGameForUnknown() - globalUserInfos non disponible, nouvelle tentative dans 1s.');
+            // Si les données ne sont pas prêtes, réessayer après un court délai
+            setTimeout(checkPlayerGameForUnknown, 1000);
+            return;
+        }
+
+        // 1. Créer une Map pour un accès ultra-rapide aux classements des jeux.
+        // Clé: ID du jeu (en chaîne de caractères), Valeur: classement du joueur.
+        const gameRanks = new Map();
+        globalUserInfos.game_list.forEach(game => {
+            // S'assurer que l'ID est une chaîne de caractères pour une comparaison fiable
+            gameRanks.set(game.id.toString(), game.player_rank);
+        });
+
+        // 2. Parcourir tous les jeux affichés sur la page de prestige
+        document.querySelectorAll('.palmares_game').forEach(gameElement => {
+            const link = gameElement.querySelector('.bga-link');
+            if (!link) return; // Sécurité si le lien n'est pas trouvé
+
+            const href = link.getAttribute('href');
+            const match = href.match(/&game=([0-9]+)/);
+            if (!match) return; // Sécurité si l'ID du jeu n'est pas trouvé
+
+            const gameId = match[1];
+
+            // 3. Vérifier si le jeu est "non connu"
+            // Condition : Soit le jeu n'est pas du tout dans la Map (cas 2),
+            // soit il y est mais son classement est 0 (cas 1).
+            if (!gameRanks.has(gameId) || gameRanks.get(gameId) == 0) {
+                gameElement.style.backgroundColor = '#ffc0cb'; // Appliquer le fond rose
+            }
+        });
+        logDebug('checkPlayerGameForUnknown() - END');
     }
 
     /* GENERAL TOPBAR UI BUTTONS */
@@ -716,13 +772,6 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                     gameTableMgrBox.remove();
                 }
             }
-        }
-        else if (/boardgamearena\.com\/player\?section=prestige/.test(document.baseURI)) {
-            logDebug('gameTables_page_ui() - prestige page detected (not implemented)');
-            const AchievmentCountLink = document.getElementById('pagesection_prestige').querySelector('.pagesection_link');
-            const NameSortItem = document.getElementById('games_sortby_name');
-            const ELOSortItem = document.getElementById('games_sortby_ELO');
-
         }
         logDebug('gameTables_page_ui() - END');
     }

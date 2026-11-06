@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: GamesInProgress & Tournaments
 // @namespace    https://ebumna.net/
-// @version      0.26
+// @version      0.27
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -194,8 +194,6 @@ img.emblem { background-color: white; }
     const observer_tournament = new MutationObserver(improveTournamentDetails);
     const observer_calendar = new MutationObserver(fixCalendarLinks);
 
-    const observer_playergames = new MutationObserver(checkPlayerGameForUnknown);
-
     const observer_mainPanel = new MutationObserver(manageScript);
     observer_mainPanel.observe(oRoot, config_stree);
 
@@ -219,9 +217,6 @@ img.emblem { background-color: white; }
             observer_tournament.observe(document.body, config_stree);
             observer_calendar.observe(document.body, config_element);
         }
-        else if (/boardgamearena\.com\/player\?id=/.test(document.baseURI)) {
-            observer_playergames.observe(oMainPanel, config_stree);
-        }
         else {
             //observer_gamesPanel.disconnect();
             //observer_players.disconnect();
@@ -229,7 +224,6 @@ img.emblem { background-color: white; }
             observer_tournamentDetailsPanel.disconnect();
             observer_tournament.disconnect();
             observer_calendar.disconnect();
-            observer_playergames.disconnect();
         }
     }
 
@@ -677,49 +671,4 @@ function improveTournamentDetailsPanel() {
         }
     }
 
-    /* PLAYER */
-    /* Ajoute un fond aux jeux non connus actuellement sur la page https://boardgamearena.com/player?id=XXX&section=prestige */
-    function checkPlayerGameForUnknown() {
-        logDebug("checkPlayerGameForUnknown()");
-        if (document.querySelector('#pagesection_prestige') == null) {
-            return;
-        }
-
-        observer_playergames.disconnect(); // Arrêter l'observateur pour éviter les boucles infinies pendant la modification
-
-        // Vérifier que les informations globales du joueur sont bien chargées
-        if (!window.globalUserInfos || !globalUserInfos.game_list) {
-            console.log('BGA_GIP> globalUserInfos non disponible, nouvelle tentative dans 1s.');
-            // Si les données ne sont pas prêtes, réessayer après un court délai
-            setTimeout(checkPlayerGameForUnknown, 1000);
-            return;
-        }
-
-        // 1. Créer une Map pour un accès ultra-rapide aux classements des jeux.
-        // Clé: ID du jeu (en chaîne de caractères), Valeur: classement du joueur.
-        const gameRanks = new Map();
-        globalUserInfos.game_list.forEach(game => {
-            // S'assurer que l'ID est une chaîne de caractères pour une comparaison fiable
-            gameRanks.set(game.id.toString(), game.player_rank);
-        });
-
-        // 2. Parcourir tous les jeux affichés sur la page de prestige
-        document.querySelectorAll('.palmares_game').forEach(gameElement => {
-            const link = gameElement.querySelector('.bga-link');
-            if (!link) return; // Sécurité si le lien n'est pas trouvé
-
-            const href = link.getAttribute('href');
-            const match = href.match(/&game=([0-9]+)/);
-            if (!match) return; // Sécurité si l'ID du jeu n'est pas trouvé
-
-            const gameId = match[1];
-
-            // 3. Vérifier si le jeu est "non connu"
-            // Condition : Soit le jeu n'est pas du tout dans la Map (cas 2),
-            // soit il y est mais son classement est 0 (cas 1).
-            if (!gameRanks.has(gameId) || gameRanks.get(gameId) == 0) {
-                gameElement.style.backgroundColor = '#ffc0cb'; // Appliquer le fond rose
-            }
-        });
-    }
 })();
