@@ -9,8 +9,7 @@
 // @icon         https://x.boardgamearena.net/data/themereleases/231110-1000/img/logo/logo.png
 // @updateURL    https://github.com/Ratithoglys/BGA_Utils/raw/main/General.user.js
 // @downloadURL  https://github.com/Ratithoglys/BGA_Utils/raw/main/General.user.js
-// @grant        GM_getValue
-// @grant        GM_setValue
+// @grant        none
 // ==/UserScript==
 
 (function() {
@@ -364,8 +363,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     }
 
     /* PROFIL > Prestige/XP : tri de la liste des jeux par nom ou par ELO.
-       Tri par défaut : par nom. Les boutons sont insérés en haut de la
-       liste, à gauche du lien des awards (#pagesection_prestige .pagesection_link). */
+       Tri par défaut : par nom. Les boutons sont insérés dans le titre de
+       section (h3.pagesection__title), après le badge XP, avec un séparateur. */
     function sortPlayerGames(by) {
         logDebug('sortPlayerGames() - START', by);
         const gameElements = document.querySelectorAll('.palmares_game');
@@ -395,11 +394,13 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     function addPlayerSortButtons() {
         logDebug('addPlayerSortButtons() - START');
         if (document.getElementById('eb-player-sortby-name')) return; // Boutons déjà présents
-        const awardsLink = document.querySelector('#pagesection_prestige .pagesection_link');
-        if (!awardsLink) return;
+        const title = document.querySelector('#pagesection_prestige .pagesection__title');
+        if (!title) return;
 
         const wrapper = document.createElement('span');
         wrapper.id = 'eb-player-sort';
+        const separator = document.createElement('span');
+        separator.textContent = ' • ';
         const nameBtn = document.createElement('button');
         nameBtn.id = 'eb-player-sortby-name';
         nameBtn.textContent = 'Sort by Name';
@@ -408,8 +409,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         eloBtn.id = 'eb-player-sortby-elo';
         eloBtn.textContent = 'Sort by ELO';
         eloBtn.addEventListener('click', () => sortPlayerGames('elo'));
-        wrapper.append(nameBtn, ' ', eloBtn, ' ');
-        awardsLink.parentNode.insertBefore(wrapper, awardsLink);
+        wrapper.append(separator, nameBtn, ' ', eloBtn);
+        title.appendChild(wrapper); // Après le badge XP, dans le titre de section
         logDebug('addPlayerSortButtons() - END');
     }
 
