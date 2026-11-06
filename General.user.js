@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.42
+// @version      0.43
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -904,20 +904,42 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
         const games = [];
         gameElements.forEach(element => {
+            // Le tri ELO réaffiche tout : le masquage ne vaut qu'en arène (tri Rank)
+            element.style.display = 'block';
             const gameEloElement = element.querySelector('.myelo_value');
             // NaN ou absence de .myelo_value => -9999
             const gameElo = gameEloElement ? parseInt(gameEloElement.textContent, 10) : NaN;
-            games.push({ element, eloValue: isNaN(gameElo) ? -9999 : gameElo });
+            games.push({ element, eloValue: isNaN(gameElo) ? -9999 : gameElo, hasTutorial: element.querySelector('.how_to_play_button') !== null });
         });
 
-        // Trier en utilisant eloValue (sens courant : lobbySortDir)
-        games.sort((a, b) => lobbySortDir === 'desc' ? b.eloValue - a.eloValue : a.eloValue - b.eloValue);
+        if (lobbySortDir === 'asc') {
+            // Tri ascendant : par niveau d'abord (tuto à faire, "~~", ELO 0/1),
+            // puis par ELO croissant dans chaque niveau
+            games.sort((a, b) => {
+                const tierA = eloSortTier(a), tierB = eloSortTier(b);
+                if (tierA !== tierB) return tierA - tierB;
+                return a.eloValue - b.eloValue;
+            });
+        } else {
+            // Trier en utilisant eloValue (décroissant)
+            games.sort((a, b) => b.eloValue - a.eloValue);
+        }
 
         // Réorganiser les éléments dans le conteneur
         games.forEach(game => {
             container.appendChild(game.element);
         });
         logDebug('sortByElo() - END');
+    }
+
+    /* Niveau d'un jeu pour le tri ELO ascendant : 0 = ELO 0 avec tuto à faire
+       (icône verte), 1 = ELO invalide ("~~"), 2 = ELO 0 ou 1 (icône rose),
+       3 = le reste. */
+    function eloSortTier(game) {
+        if (game.eloValue === 0 && game.hasTutorial) return 0;
+        if (game.eloValue === -9999) return 1;
+        if (game.eloValue === 0 || game.eloValue === 1) return 2;
+        return 3;
     }
     function sortByArenaRank() {
         logDebug('sortByArenaRank() - START', lobbySortDir);
