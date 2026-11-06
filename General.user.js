@@ -471,11 +471,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         const notGamePage = !isGamePage();
 
         /* MENU : liens du menu vertical mobile (ancre et conteneur d'icône
-           diffèrent selon le bouton ; le libellé de Tables garde son espace) */
+           diffèrent selon le bouton) */
         const mobileButtons = [
             ['notifsMobile', '/playernotif', '🚨 Notifs', '/headlines', false],
             ['newsFeedMobile', '/player?section=recent', '📰 Feed', '/headlines', true],
-            ['tablesMobile', '/gameinprogress', ' 🎲 Tables', '/lobby', false],
+            ['tablesMobile', '/gameinprogress', '🎲 Tables', '/lobby', false],
             ['tournamentsListMobile', '/tournamentlist', '🏆 Tournois', '/lobby', true]
         ];
         mobileButtons.forEach(([id, href, label, anchor, withCont]) => {
