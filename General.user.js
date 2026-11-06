@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.35
+// @version      0.36
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -607,6 +607,45 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             const sortByArenaRankOption = document.getElementById('favorite_sortby_rank');
             const sortByPopularity = document.getElementById('favorite_sortby_popularity');
 
+            /* Crée une option de tri ("Sort by ELO" / "Sort by Rank") : même
+               création d'élément, même clic (tri + coche + sélection). */
+            function addSortOption(id, label, sortFn) {
+                logDebug('gameTables_page_ui() - creating sort option', id);
+                const newMenuItem = document.createElement('a');
+                newMenuItem.href = '#';
+                newMenuItem.classList.add('bga-link', 'login-menu-item', 'sortby', 'notselected');
+                newMenuItem.id = id;
+                newMenuItem.textContent = label;
+
+                newMenuItem.addEventListener('click', function(event) {
+                    logDebug('gameTables_page_ui() - sort option clicked', id);
+                    event.preventDefault();
+                    sortFn();
+
+                    // Update menu item selection visually
+                    const existingSelected = sortbySection.querySelector('.selected');
+                    if (existingSelected) {
+                        existingSelected.classList.remove('selected');
+                        existingSelected.classList.add('notselected');
+
+                        // Remove the checkmark icon (if it exists)
+                        const checkmarkIcon = existingSelected.querySelector('.fa-check');
+                        if (checkmarkIcon) {
+                            existingSelected.removeChild(checkmarkIcon);
+                        }
+                    }
+                    // Add the checkmark icon to the newly selected item
+                    newMenuItem.classList.add('selected');
+                    newMenuItem.classList.remove('notselected');
+                    newMenuItem.innerHTML = label + ' <i class="fa fa-check" aria-hidden="true"></i>';
+                });
+
+                // Insert the new menu item before "Sort by name"
+                const nameMenuItem = document.getElementById('favorite_sortby_name');
+                sortbySection.insertBefore(newMenuItem, nameMenuItem);
+                logDebug('gameTables_page_ui() - sort option added to menu', id);
+            }
+
             if (sortByPopularity) {
                 logDebug('gameTables_page_ui() - removing sortByPopularity');
                 sortByPopularity.remove();
@@ -621,41 +660,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
                 /* Sort by ELO option */
                 if (sortMenu && !sortByEloOption) {
-                    logDebug('gameTables_page_ui() - sortMenu exists and sortByEloOption is null, creating sortByEloOption');
-                    const newMenuItem = document.createElement('a');
-                    newMenuItem.href = '#';
-                    newMenuItem.classList.add('bga-link', 'login-menu-item', 'sortby', 'notselected');
-                    newMenuItem.id = 'favorite_sortby_elo';
-                    newMenuItem.textContent = 'Sort by ELO';
-
-                    // Add the click event listener to trigger the sorting
-                    newMenuItem.addEventListener('click', function(event) {
-                        logDebug('gameTables_page_ui() - sortByEloOption clicked');
-                        event.preventDefault(); // Prevent default link behavior
-                        sortByElo(); // Call the sorting function (defined below)
-
-                        // Update menu item selection visually
-                        const existingSelected = sortbySection.querySelector('.selected'); // Select within sortbySection
-                        if (existingSelected) {
-                            existingSelected.classList.remove('selected');
-                            existingSelected.classList.add('notselected');
-
-                            // Remove the checkmark icon (if it exists)
-                            const checkmarkIcon = existingSelected.querySelector('.fa-check');
-                            if (checkmarkIcon) {
-                                existingSelected.removeChild(checkmarkIcon);
-                            }
-                        }
-                        // Add the checkmark icon to the newly selected item
-                        newMenuItem.classList.add('selected');
-                        newMenuItem.classList.remove('notselected');
-                        newMenuItem.innerHTML = 'Sort by ELO <i class="fa fa-check" aria-hidden="true"></i>';
-                    });
-
-                    // Insert the new menu item before "Sort by name"
-                    const nameMenuItem = document.getElementById('favorite_sortby_name');
-                    sortbySection.insertBefore(newMenuItem, nameMenuItem);
-                    logDebug('gameTables_page_ui() - sortByEloOption added to menu');
+                    addSortOption('favorite_sortby_elo', 'Sort by ELO', sortByElo);
                 }
 
                 //Simulate a click on the "Sort by ELO" menu item after the page loads
@@ -688,40 +693,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
                 /* Sort by Arena Ranking option */
                 if (sortMenu && !sortByArenaRankOption) {
-                    logDebug('gameTables_page_ui() - sortMenu exists and sortByArenaRankOption is null, creating sortByArenaRankOption');
-                    const newRankMenuItem = document.createElement('a');
-                    newRankMenuItem.href = '#';
-                    newRankMenuItem.classList.add('bga-link', 'login-menu-item', 'sortby', 'notselected');
-                    newRankMenuItem.id = 'favorite_sortby_rank';
-                    newRankMenuItem.textContent = 'Sort by Rank';
-
-                    newRankMenuItem.addEventListener('click', function(event) {
-                        logDebug('gameTables_page_ui() - sortByArenaRankOption clicked');
-                        event.preventDefault();
-                        sortByArenaRank(); // Call the new sorting function
-
-                        // Update menu item selection visually (same logic as for "Sort by ELO")
-                        const existingSelected = sortbySection.querySelector('.selected');
-                        if (existingSelected) {
-                            existingSelected.classList.remove('selected');
-                            existingSelected.classList.add('notselected');
-
-                            // Remove the checkmark icon (if it exists)
-                            const selectedIcon = existingSelected.querySelector('.fa-check');
-                            if (selectedIcon) {
-                                existingSelected.removeChild(selectedIcon);
-                            }
-                        }
-                        // Add the checkmark icon to the newly selected item
-                        newRankMenuItem.classList.add('selected');
-                        newRankMenuItem.classList.remove('notselected');
-                        newRankMenuItem.innerHTML = 'Sort by Rank <i class="fa fa-check" aria-hidden="true"></i>';
-                    });
-
-                    // Insert "Sort by Rank" before "Sort by popularity"
-                    const nameMenuItem = document.getElementById('favorite_sortby_name');
-                    sortbySection.insertBefore(newRankMenuItem, nameMenuItem);
-                    logDebug('gameTables_page_ui() - sortByArenaRankOption added to menu');
+                    addSortOption('favorite_sortby_rank', 'Sort by Rank', sortByArenaRank);
                 }
 
                 //Simulate a click on the "Sort by Rank" menu item after the page loads
