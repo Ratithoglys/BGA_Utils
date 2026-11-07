@@ -1204,7 +1204,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
        afficher. Insérée après la ligue et remontée de 34px en dur. */
     function addArenaEloBadges() {
         logDebug('addArenaEloBadges() - START');
-        document.querySelectorAll('.game_box_wrap.initial_favorite').forEach(element => {
+        document.querySelectorAll('.game_box_wrap').forEach(element => {
             // Retirer un éventuel clone natif (0.45) s'il existe encore
             element.querySelectorAll('.eb-arena-elo-clone').forEach(clone => clone.remove());
             const eloEl = element.querySelector('.myelo_value');
@@ -1248,7 +1248,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     /* Recolore les badges ELO natifs BGA avec les couleurs de niveaux de
        Len (lobby standard : le badge natif est affiché tel quel). */
     function recolorNativeEloBadges() {
-        document.querySelectorAll('.game_box_wrap.initial_favorite').forEach(element => {
+        document.querySelectorAll('.game_box_wrap').forEach(element => {
             const eloEl = element.querySelector('.myelo_value');
             const elo = eloEl ? parseInt(eloEl.textContent, 10) : NaN;
             const level = !isNaN(elo) ? eloToLevel(elo) : levelFromGamerankClass(element);
