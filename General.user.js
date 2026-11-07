@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.65
+// @version      0.65.1
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -1135,11 +1135,12 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         logDebug('sortByElo() - END');
     }
 
-    /* Niveau d'un jeu pour le tri ELO ascendant : 0 = ELO 0 avec tuto à faire
-       (icône verte), 1 = ELO invalide ("~~"), 2 = ELO 0 ou 1 (icône rose),
-       3 = le reste. */
+    /* Niveau d'un jeu pour le tri ELO ascendant : 0 = tuto à faire (quel que
+       soit l'ELO — un tuto à ELO 1 tombait dans le même niveau que les ELO 1
+       et se mélangeait à eux, 0.65.1), 1 = ELO invalide ("~~"),
+       2 = ELO 0 ou 1 (icône rose), 3 = le reste. */
     function eloSortTier(game) {
-        if (game.eloValue === 0 && game.hasTutorial) return 0;
+        if (game.hasTutorial) return 0;
         if (game.eloValue === -9999) return 1;
         if (game.eloValue === 0 || game.eloValue === 1) return 2;
         return 3;
