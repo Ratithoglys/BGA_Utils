@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.56
+// @version      0.57
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -871,8 +871,13 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
                 // Tri par défaut (ELO) appliqué une seule fois par chargement :
                 // ensuite, le choix manuel de l'utilisateur n'est plus écrasé.
+                // Garde = lobbySortKey (état du script), pas la classe
+                // 'selected' du menu (état BGA, désynchronisée : ELO peut
+                // l'avoir alors que le tri actif est Rank) — sinon le défaut
+                // ne s'applique pas après un basculement de lobby, et la
+                // liste reste triée par Rank sur le standard.
                 const sortByELOMenuItem = document.getElementById('favorite_sortby_elo');
-                if (!lobbyDefaultSortDone && sortByELOMenuItem && !sortByELOMenuItem.classList.contains('selected')) {
+                if (!lobbyDefaultSortDone && sortByELOMenuItem && lobbySortKey !== 'elo') {
                     lobbyDefaultSortDone = true;
                     logDebug('gameTables_page_ui() - simulating click on sortByELOMenuItem');
                     sortByELOMenuItem.click();
@@ -908,8 +913,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 }
 
                 // Tri par défaut (Rank) appliqué une seule fois par chargement.
+                // Garde = lobbySortKey, comme pour ELO (voir ci-dessus).
                 const sortByRankMenuItem = document.getElementById('favorite_sortby_rank');
-                if (!lobbyDefaultSortDone && sortByRankMenuItem && !sortByRankMenuItem.classList.contains('selected')) {
+                if (!lobbyDefaultSortDone && sortByRankMenuItem && lobbySortKey !== 'rank') {
                     lobbyDefaultSortDone = true;
                     logDebug('gameTables_page_ui() - simulating click on sortByRankMenuItem');
                     sortByRankMenuItem.click();
