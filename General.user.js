@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.55
+// @version      0.55.1
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -663,8 +663,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     function markFavoriteGames() {
         if (typeof globalUserInfos === 'undefined' || !globalUserInfos.game_list) return;
 
-        // Pas de cache : on recalcule le Set à chaque appel (< 1 ms), ce qui permet
-        // de voir les ajouts/retraits de favoris en direct.
+        // Pas de cache : on recalcule le Set à chaque appel (< 1 ms).
+        // L'observateur est déconnecté après le premier marquage, donc
+        // un ajout/retrait de favori ne sera visible qu'après rechargement
+        // de la page (pas de suivi en direct).
         const favGames = globalUserInfos.game_list.filter(g => g.favorite === true || g.favorite === 1 || g.favorite === "1");
         const favoriteGameNames = new Set(favGames.map(g => g.name));
 
