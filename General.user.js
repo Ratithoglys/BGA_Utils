@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.49
+// @version      0.50
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -506,11 +506,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
         const setType = (html) => {
             if (!document.querySelector('#ebgame-type')) {
-                document.querySelector('#site-logo').insertAdjacentHTML('beforebegin', '<div id="ebgame-type">' + html + '</div>');
+                document.querySelector('#site-logo')?.insertAdjacentHTML('beforebegin', '<div id="ebgame-type">' + html + '</div>');
             }
         };
 
-        if (gameui.tournament_id !== null) {
+        if (gameui.tournament_id != null) {
             return setType('<a id="gametypeicon" href="/tournament?id=' + gameui.tournament_id + '#overview">🏆</a>');
         }
         if (document.body.classList.contains('arena_mode')) {
