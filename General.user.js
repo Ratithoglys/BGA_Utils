@@ -772,6 +772,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         newMenuItem.addEventListener('click', function(event) {
             logDebug('addSortOption() - sort option clicked', id);
             event.preventDefault();
+            // Empêcher le handler du menu BGA de recevoir le clic et
+            // d'écraser notre tri par le sien.
+            event.stopPropagation();
             toggleLobbySort(sortKey, defaultDir);
             sortFn();
 
