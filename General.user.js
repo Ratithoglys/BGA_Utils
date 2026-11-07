@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.45
+// @version      0.46
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -212,6 +212,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
        sur son sens par défaut (ELO et Rank : descendant, Nom : ascendant). */
     let lobbySortKey = null; // 'elo' | 'rank' | null
     let lobbySortDir = 'desc';
+    let lobbyDefaultSortDone = false; // Tri par défaut appliqué une seule fois par chargement (0.46)
     let playerSortKey = 'name'; // 'name' | 'elo' — tri par défaut : par nom
     let playerSortDir = 'asc';
 
@@ -234,6 +235,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     });
 
     function init() {
+        lobbyDefaultSortDone = false; // Nouveau chargement : le tri par défaut sera réappliqué une fois
         observer_lobby_wait.disconnect();
         observer_groups_wait.disconnect();
         observer_player_games.disconnect();
@@ -811,9 +813,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                     addSortOption('favorite_sortby_elo', 'Sort by ELO', sortByElo, 'elo', 'desc');
                 }
 
-                //Simulate a click on the "Sort by ELO" menu item after the page loads
+                // Tri par défaut (ELO) appliqué une seule fois par chargement :
+                // ensuite, le choix manuel de l'utilisateur n'est plus écrasé.
                 const sortByELOMenuItem = document.getElementById('favorite_sortby_elo');
-                if (sortByELOMenuItem && !sortByELOMenuItem.classList.contains('selected')) {
+                if (!lobbyDefaultSortDone && sortByELOMenuItem && !sortByELOMenuItem.classList.contains('selected')) {
+                    lobbyDefaultSortDone = true;
                     logDebug('gameTables_page_ui() - simulating click on sortByELOMenuItem');
                     sortByELOMenuItem.click();
                 }
@@ -847,9 +851,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                     addSortOption('favorite_sortby_rank', 'Sort by Rank', sortByArenaRank, 'rank', 'desc');
                 }
 
-                //Simulate a click on the "Sort by Rank" menu item after the page loads
+                // Tri par défaut (Rank) appliqué une seule fois par chargement.
                 const sortByRankMenuItem = document.getElementById('favorite_sortby_rank');
-                if (sortByRankMenuItem && !sortByRankMenuItem.classList.contains('selected')) {
+                if (!lobbyDefaultSortDone && sortByRankMenuItem && !sortByRankMenuItem.classList.contains('selected')) {
+                    lobbyDefaultSortDone = true;
                     logDebug('gameTables_page_ui() - simulating click on sortByRankMenuItem');
                     sortByRankMenuItem.click();
                 }
