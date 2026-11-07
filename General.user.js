@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.67
+// @version      0.68
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -1318,6 +1318,36 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     }
 
     /** Tables ELO **/
+    /* (0.68, pt 21) Niveau d'après un libellé localisé : BGA traduit les
+       noms de niveaux (EN « Apprentice », FR « Apprenti », …) mais les
+       clés de levelColors sont anglaises. On normalise (minuscules) et on
+       mappe les libellés connus. Voie de repli seulement : le niveau est
+       d'abord cherché par l'ELO ou la classe gamerank_* (indépendants de
+       la langue). Libellés FR confirmés par Len : Débutant, Apprenti,
+       Bon joueur, Joueur fort, Maître ; « Moyen » (Average) supposé,
+       non confirmé. */
+    const levelLabelMap = {
+        'beginner': 'Beginner', 'apprentice': 'Apprentice', 'average': 'Average',
+        'good player': 'Good player', 'strong player': 'Strong player',
+        'expert': 'Expert', 'master': 'Master',
+        'débutant': 'Beginner', 'apprenti': 'Apprentice', 'moyen': 'Average',
+        'bon joueur': 'Good player', 'joueur fort': 'Strong player',
+        'maître': 'Master'
+    };
+    function levelFromLabel(label) {
+        return levelLabelMap[(label || '').trim().toLowerCase()] || null;
+    }
+
+    /* (0.68, pt 21) Mode Amical / Friendly mode, indépendant de la langue :
+       BGA localise le libellé (EN « (Friendly mode) », FR « Mode Amical »).
+       On normalise (minuscules, sans parenthèses) et on compare aux
+       libellés connus (EN + FR, les langues de Len). */
+    const friendlyModeLabels = ['friendly mode', 'mode amical'];
+    function isFriendlyModeText(text) {
+        const t = (text || '').trim().toLowerCase().replace(/[()]/g, '').trim();
+        return friendlyModeLabels.includes(t);
+    }
+
     function improveGameTables() {
         logDebug('improveGameTables() - START');
         // (0.59) Plus de fond rose pour gamerank_apprentice/beginner : la
@@ -1328,7 +1358,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         document.querySelectorAll('.how_to_play_button').forEach(e => { e.style.backgroundColor = levelColors['Beginner']; e.style.color = textColorForBg(levelColors['Beginner']); });
 
         document.querySelectorAll('.table_status_additional').forEach(e => {
-            if (e.textContent.trim() == '(Friendly mode)') {
+            if (isFriendlyModeText(e.textContent)) {
                 const table = e.closest('.gametable');
                 if (!table) return;
                 table.style.backgroundColor = 'lightgrey';
@@ -1340,11 +1370,19 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         });
 
         document.querySelectorAll('.playersummary').forEach(e => {
-            const color = levelColors[e.textContent.trim()];
-            if (color) {
-                const place = e.closest('.tableplace');
-                if (place) place.style.backgroundColor = color;
+            const place = e.closest('.tableplace');
+            if (!place) return;
+            // (0.68, pt 21) Niveau indépendant de la langue : par la classe
+            // gamerank_* ou l'ELO si présents, sinon par le libellé.
+            let level = levelFromGamerankClass(place);
+            if (!level) {
+                const eloEl = place.querySelector('.gamerank_value');
+                const elo = eloEl ? parseInt(eloEl.textContent, 10) : NaN;
+                if (!isNaN(elo)) level = eloToLevel(elo);
             }
+            if (!level) level = levelFromLabel(e.textContent);
+            const color = level ? levelColors[level] : null;
+            if (color) place.style.backgroundColor = color;
         });
 
         // (0.60) L'observateur est rouvert par le finally de
