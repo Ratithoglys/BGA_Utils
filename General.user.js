@@ -922,7 +922,12 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         [['favorite_sortby_elo', 'elo'], ['favorite_sortby_rank', 'rank']].forEach(([id, key]) => {
             const item = document.getElementById(id);
             if (!item) return;
-            const base = item.textContent.replace(/ [▲▼]$/, '');
+            // On retire TOUTES les flèches en fin de libellé (et les espaces) :
+            // l'ancienne regex / [▲▼]$/ ne retirait qu'une seule flèche en
+            // toute fin de chaîne, or après l'ajout de la coche le textContent
+            // se termine par "▼ " (flèche + espace) — la regex ne matchait
+            // plus, les flèches s'accumulaient à chaque clic.
+            const base = item.textContent.replace(/[ ▲▼]+$/, '');
             const check = item.classList.contains('selected') ? ' <i class="fa fa-check" aria-hidden="true"></i>' : '';
             item.innerHTML = base + (lobbySortKey === key ? arrow : '') + check;
         });
