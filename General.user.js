@@ -1270,7 +1270,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         // (0.59) Plus de fond rose pour gamerank_apprentice/beginner : la
         // couleur du niveau (levelColors) s'applique, sinon le badge 0-100
         // restait rose au lieu de vert (Beginner) / bleu (Apprentice).
-        document.querySelectorAll('.how_to_play_button').forEach(e => { e.style.backgroundColor = 'lightgreen' });
+        // (0.59) Tuto en attente : vert palette (couleur Beginner), comme
+        // Beginner 0 ; Apprentice et 1-100 sont en bleu palette.
+        document.querySelectorAll('.how_to_play_button').forEach(e => { e.style.backgroundColor = levelColors['Beginner']; e.style.color = textColorForBg(levelColors['Beginner']); });
 
         document.querySelectorAll('.table_status_additional').forEach(e => {
             if (e.textContent.trim() == '(Friendly mode)') {
