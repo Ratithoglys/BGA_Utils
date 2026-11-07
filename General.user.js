@@ -794,6 +794,13 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             newMenuItem.classList.add('selected');
             newMenuItem.classList.remove('notselected');
             updateLobbySortIndicators();
+            // Re-tri différé : BGA re-rend la liste à la fermeture du menu
+            // Display Options, après notre tri. On le ré-applique une fois
+            // BGA fini.
+            setTimeout(() => {
+                sortFn();
+                updateLobbySortIndicators();
+            }, 200);
         });
 
         // Insert the new menu item before "Sort by name"
