@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.66.1
+// @version      0.67
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -170,11 +170,14 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     // recharger la page. On intercepte directement pushState/replaceState
     // et popstate (précédent/suivant), au lieu de surveiller tout le DOM
     // avec un MutationObserver pour détecter le changement d'URL.
-    let lastUrl = location.href;
+    let lastUrl = location.pathname + location.search;
     function onUrlChange() {
-        if (location.href !== lastUrl) {
-            lastUrl = location.href;
-            logDebug('URL Change detected to:', lastUrl);
+        // (0.67) On compare pathname + search : le script n'utilise jamais
+        // le hash, un changement de hash seul ne doit pas relancer init().
+        const url = location.pathname + location.search;
+        if (url !== lastUrl) {
+            lastUrl = url;
+            logDebug('URL Change detected to:', url);
             try { init(); } catch (e) { console.error('BGA_GEN> init', e); } // On relance la logique globale
         }
     }
@@ -206,7 +209,29 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     };
 
     /* GENERAL TOPBAR UI BUTTONS */
-    const observer_menu = new MutationObserver(addGamesButtons);
+    /* (0.67, pt 10) Regroupement des déclenchements de addGamesButtons sur
+       requestAnimationFrame : quand le DOM mute en rafale (chargement d'une
+       page de jeu), on n'exécute qu'un seul passage par frame au lieu d'un
+       par mutation. En arrière-plan, rAF ne se déclenche pas : on exécute
+       directement pour que les boutons soient posés quand l'onglet revient
+       au premier plan. (Première tentative abandonnée à tort : les boutons
+       n'apparaissaient pas à cause de game_display_name undefined dans la
+       frame, pas à cause du rAF — corrigé en 0.66.1.) */
+    let menuRafPending = false;
+    function scheduleAddGamesButtons() {
+        if (menuRafPending) return;
+        menuRafPending = true;
+        if (document.hidden) {
+            menuRafPending = false;
+            addGamesButtons();
+        } else {
+            requestAnimationFrame(() => {
+                menuRafPending = false;
+                addGamesButtons();
+            });
+        }
+    }
+    const observer_menu = new MutationObserver(scheduleAddGamesButtons);
     const observer_mobilemenu = new MutationObserver(addMobileGamesButtons);
 
     /* GAMES > Player color - Once per load **/
@@ -278,31 +303,39 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         return lum > 0.5 ? '#333' : '#fff';
     }
 
+    /* Couples fond/texte par niveau, précalculés une fois (0.67) : plus de
+       calcul de luminance à chaque boîte. */
+    const levelBadgeColors = {};
+    for (const [level, bg] of Object.entries(levelColors)) {
+        levelBadgeColors[level] = { bg, fg: textColorForBg(bg) };
+    }
+
     /* Couleurs du badge ELO pour un niveau donné : fond = couleur du
        niveau (levelColors), texte = lisible sur ce fond. */
     function badgeColorsForLevel(level) {
-        const bg = levelColors[level] || '#333';
-        return { bg, fg: textColorForBg(bg) };
+        return levelBadgeColors[level] || { bg: '#333', fg: '#fff' };
     }
+
+    /* Correspondance classe gamerank_* -> niveau, précalculée une fois (0.67). */
+    const gamerankLevelMap = {
+        beginner: 'Beginner',
+        apprentice: 'Apprentice',
+        average: 'Average',
+        good: 'Good player',
+        goodplayer: 'Good player',
+        strong: 'Strong player',
+        strongplayer: 'Strong player',
+        expert: 'Expert',
+        master: 'Master'
+    };
 
     /* Niveau d'après une classe gamerank_* sur la boîte (jeux sans ELO
        affiché mais avec un rang, ex. Dédale). */
     function levelFromGamerankClass(element) {
-        const map = {
-            beginner: 'Beginner',
-            apprentice: 'Apprentice',
-            average: 'Average',
-            good: 'Good player',
-            goodplayer: 'Good player',
-            strong: 'Strong player',
-            strongplayer: 'Strong player',
-            expert: 'Expert',
-            master: 'Master'
-        };
         const els = [element, ...element.querySelectorAll('[class*="gamerank_"]')];
         for (const el of els) {
             const m = (el.getAttribute('class') || '').match(/gamerank_([a-z]+)/);
-            if (m && map[m[1]]) return map[m[1]];
+            if (m && gamerankLevelMap[m[1]]) return gamerankLevelMap[m[1]];
         }
         return null;
     }
@@ -630,7 +663,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             // pas encore prêts : on saute juste l'insertion. Sinon, la fonction
             // sort avant d'avoir posé #backToTables / #langFR, et l'observateur
             // peut se couper alors que #game-logo n'est toujours pas là
-            // (régression 0.64).
+            // (régression 0.64). Le logo n'exige plus game_display_name
+            // (repli sur game_name, undefined dans la frame du jeu).
             if (typeof gameui !== 'undefined' && gameui.game_name) {
                 const siteLogo = document.querySelector('#site-logo');
                 if (siteLogo) {
@@ -779,8 +813,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             observer_favorite_games.disconnect();
         }
 
+        // (0.67) Un seul log avec les compteurs, au lieu d'un log par lien.
+        let heartsAdded = 0, heartsRemoved = 0;
         gameLinks.forEach((link) => {
-            logDebug('markFavoriteGames() - link', link);
             if (!link.href) return;
 
             let gameName = null;
@@ -807,12 +842,15 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                     link.style.position = 'relative';
                 }
                 link.insertAdjacentHTML('beforeend', '<div class="eb-favorite-heart">❤️</div>');
+                heartsAdded++;
             }
             // Retrait du coeur
             else if (!isFav && existingHeart) {
                 existingHeart.remove();
+                heartsRemoved++;
             }
         });
+        logDebug('markFavoriteGames() - coeurs ajoutés : ' + heartsAdded + ', retirés : ' + heartsRemoved);
     }
 
     /* GAMES */
@@ -855,6 +893,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (!lobbyInner) return;
         logDebug('playnow_loop() - START');
         observer_gametables.disconnect();
+        // (0.67) Mesure (pt 8) : durée d'un passage, loguée seulement si
+        // elle dépasse une frame (16 ms) — sinon la console serait noyée.
+        // Si aucun log « lent » n'apparaît en usage normal, les perfs
+        // 9-12 ne sont pas justifiées.
+        const t0 = performance.now();
         try {
             gameTables_page_ui();
             improveGameTables();
@@ -862,6 +905,12 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             console.error('BGA_GEN> playnow_loop', e);
         } finally {
             observer_gametables.observe(lobbyInner, config_stree);
+        }
+        const dt = performance.now() - t0;
+        if (dt > 16) {
+            const now = new Date();
+            const ts = now.toLocaleTimeString('fr-FR', { hour12: false }) + '.' + String(now.getMilliseconds()).padStart(3, '0');
+            logDebug('playnow_loop() - lent : ' + dt.toFixed(1) + ' ms à ' + ts);
         }
         logDebug('playnow_loop() - END');
     }
