@@ -1002,19 +1002,14 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         logDebug('sortByArenaRank() - END');
     }
 
-    /* ARENE > Badge ELO natif sur les jeux : en arène, l'ELO (.myelo_value)
-       est dans le masque au survol (.wannaplay_mask_button), donc invisible
-       au repos — on clone le badge natif (mêmes classes, icône laurier
-       comprise) au-dessus de la ligue, visible en permanence.
-       Géométrie du coin (sonde 06/11, boîte 143x168) : ligue 40x40 à y=28,
-       clone 24x24 en flux à y=36 — il tient au-dessus (y=2..26) avec 2px
-       d'écart. Le clone est inséré APRÈS la ligue (peint dessus : l'ordre
-       DOM = l'ordre de peinture) puis remonté par translateY calculé. */
+    /* Badge ELO en arène : le badge natif (.myelo) est dans le masque au
+       survol, invisible au repos — on le clone (mêmes classes, laurier)
+       au-dessus de la ligue, visible en permanence. Inséré après la ligue
+       (peint dessus) et remonté de 34px en dur : ligue 40x40 à y=28,
+       clone 24x24 en flux à y=36, 2px d'écart. */
     function addArenaEloBadges() {
         logDebug('addArenaEloBadges() - START');
         document.querySelectorAll('.game_box_wrap.initial_favorite').forEach(element => {
-            // Retirer l'ancienne pastille (0.45 v1) si elle existe encore
-            element.querySelectorAll('span.eb-arena-elo-badge').forEach(pill => pill.remove());
             const eloBadgeEl = element.querySelector('.wannaplay_mask_button.myelo');
             if (!eloBadgeEl) return;
             const elo = parseInt(eloBadgeEl.querySelector('.myelo_value')?.textContent ?? '', 10);
@@ -1031,18 +1026,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 clone.style.display = 'block';
                 clone.style.visibility = 'visible';
                 clone.style.opacity = '1';
+                clone.style.transform = 'translateY(-34px)'; // 34px en dur (voir commentaire)
                 leagueEl.after(clone); // Après la ligue : peint dessus
-            }
-            if (!clone.style.transform) {
-                // Placement au-dessus de la ligue : le clone monte juste
-                // au-dessus du sommet de l'hexagone (2px d'écart).
-                const leagueRect = leagueEl.getBoundingClientRect();
-                const cloneRect = clone.getBoundingClientRect();
-                if (cloneRect.width > 0 && leagueRect.width > 0) {
-                    const dy = (leagueRect.top - cloneRect.height - 2) - cloneRect.top;
-                    clone.style.transform = 'translateY(' + dy + 'px)';
-                }
-                // Sinon (boîte masquée par le tri Rank) : on réessaiera au prochain passage.
             }
             const cloneValue = clone.querySelector('.myelo_value');
             if (cloneValue) cloneValue.textContent = elo;
