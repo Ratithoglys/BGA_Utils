@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.63
+// @version      0.64
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -624,8 +624,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             return setType('⚔️');
         }
 
+        if (typeof gameui.ajaxcall !== 'function') return;
         gameui.ajaxcall('/table/table/tableinfos.html', { id: tableId, lock: false }, gameui, (r) => {
-            if (String((r.data ?? r).options?.['201']?.value) === '1') setType('💙');
+            if (String((r?.data ?? r).options?.['201']?.value) === '1') setType('💙');
         }, () => {}, 'get');
     }
 
@@ -635,12 +636,15 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         /* GAMES : Button linking to the game page and tutorial, tournament/arena/friendly info */
         if (isGamePage() && document.querySelector('#game-logo') == null) {
             logDebug('addGamesButtons() - game page detected and #game-logo is null');
-            if (typeof gameui === 'undefined' || gameui.game_name == "" || gameui.game_display_name == "") {
+            if (typeof gameui === 'undefined' || !gameui.game_name || !gameui.game_display_name) {
                 logDebug('addGamesButtons() - gameui is undefined or game info is empty, returning');
                 return;
             }
 
-            document.querySelector('#site-logo').insertAdjacentHTML('beforebegin','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + gameui.game_display_name + '"></a>' + (isFavoriteGame() ? '<span class="eb-game-fav">❤️</span>' : '') + '</div> <div id="ebgame-tuto"><a id="gametutoicon" href="/tutorial?game=' + gameui.game_name + '">👨‍🎓</a></div>');
+            const siteLogo = document.querySelector('#site-logo');
+            if (!siteLogo) return;
+            const displayName = gameui.game_display_name.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+            siteLogo.insertAdjacentHTML('beforebegin','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + displayName + '"></a>' + (isFavoriteGame() ? '<span class="eb-game-fav">❤️</span>' : '') + '</div> <div id="ebgame-tuto"><a id="gametutoicon" href="/tutorial?game=' + gameui.game_name + '">👨‍🎓</a></div>');
             logDebug('addGamesButtons() - #game-logo button added');
 
             markTableType();
@@ -1028,10 +1032,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         }
         logDebug('gameTables_page_ui() - END');
     }
-    const expandTables = sel => document.querySelectorAll('#favorite_games_list ' + sel).forEach(e => { e.closest('.wannaplay').querySelector('.game_box_image_wrap .game_box').click(); });
-    const collapseTables = sel => document.querySelectorAll('#favorite_expanded ' + sel).forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
+    const expandTables = sel => document.querySelectorAll('#favorite_games_list ' + sel).forEach(e => { e.closest('.wannaplay')?.querySelector('.game_box_image_wrap .game_box')?.click(); });
+    const collapseTables = sel => document.querySelectorAll('#favorite_expanded ' + sel).forEach(e => { e.closest('.game_box_wrap')?.querySelector('.game_box')?.click(); });
     function collapseAllTables() {
-        document.querySelectorAll('#favorite_expanded .expandedgame_box_wrap').forEach(e => { e.closest('.game_box_wrap').querySelector('.game_box').click(); });
+        document.querySelectorAll('#favorite_expanded .expandedgame_box_wrap').forEach(e => { e.closest('.game_box_wrap')?.querySelector('.game_box')?.click(); });
     }
     /* Clic sur un contrôle de tri du lobby : inverse le sens si ce tri est
        déjà actif, sinon repart sur son sens par défaut. */
@@ -1286,8 +1290,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
         document.querySelectorAll('.table_status_additional').forEach(e => {
             if (e.textContent.trim() == '(Friendly mode)') {
-                e.closest('.gametable').style.backgroundColor = 'lightgrey';
-                const indicator = e.closest('.gametable').querySelector('div.gametable_colored_indicator');
+                const table = e.closest('.gametable');
+                if (!table) return;
+                table.style.backgroundColor = 'lightgrey';
+                const indicator = table.querySelector('div.gametable_colored_indicator');
                 if (indicator && !indicator.querySelector('.friendly_indicator')) {
                     indicator.innerHTML = '<div class="friendly_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">💙</div>';
                 }
@@ -1297,7 +1303,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         document.querySelectorAll('.playersummary').forEach(e => {
             const color = levelColors[e.textContent.trim()];
             if (color) {
-                e.closest('.tableplace').style.backgroundColor = color;
+                const place = e.closest('.tableplace');
+                if (place) place.style.backgroundColor = color;
             }
         });
 
