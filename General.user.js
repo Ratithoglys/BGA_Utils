@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.46
+// @version      0.47
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -550,13 +550,21 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         ];
         if (!isGamePage() && document.querySelector('.bga-menu-bar-items') !== null) {
             menuButtons.forEach(([id, href, label, shortLabel]) => {
-                if (document.querySelector('#' + id) !== null) return;
                 // backToTables sur page tuto avec #upperrightmenu : le bouton va
                 // dans #upperrightmenu (bloc ci-dessous), pas dans le menu.
                 if (id === 'backToTables' && isTutorialPage() && document.querySelector('#upperrightmenu') !== null) return;
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'), '<a id="' + id + '" class="' + nativeMenuLinkClass() + '" href="' + href + '">' + label + '</a>');
-                insertAfterFirstElement(document.querySelector('.bga-menu-bar-items.bga-mobile'), '<a class="' + nativeMenuLinkClass() + '" href="' + href + '">' + shortLabel + '</a>');
-                logDebug('addGamesButtons() - #' + id + ' button added');
+                // Desktop et mobile sont traités séparément (0.47) : si la barre
+                // mobile est vide au premier passage, son lien doit être
+                // réessayé au passage suivant, même si le lien desktop existe déjà.
+                if (document.querySelector('#' + id) === null) {
+                    insertAfterFirstElement(document.querySelector('.bga-menu-bar-items'), '<a id="' + id + '" class="' + nativeMenuLinkClass() + '" href="' + href + '">' + label + '</a>');
+                    logDebug('addGamesButtons() - #' + id + ' button added');
+                }
+                const mobileBar = document.querySelector('.bga-menu-bar-items.bga-mobile');
+                if (mobileBar && !mobileBar.querySelector('a[href="' + href + '"]')) {
+                    insertAfterFirstElement(mobileBar, '<a class="' + nativeMenuLinkClass() + '" href="' + href + '">' + shortLabel + '</a>');
+                    logDebug('addGamesButtons() - #' + id + ' mobile button added');
+                }
             });
         }
 
