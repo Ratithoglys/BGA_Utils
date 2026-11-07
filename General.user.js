@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.53
+// @version      0.54
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -928,13 +928,22 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
     function sortByElo() {
         logDebug('sortByElo() - START', lobbySortDir);
-        const gameElements = document.querySelectorAll('.game_box_wrap.initial_favorite');
         const container = document.getElementById('favorite_games_list');
+        if (!container) return;
+        // On ne trie que les boîtes présentes dans la liste (0.54) : une
+        // boîte déplacée par BGA (carte ouverte dans #favorite_expanded)
+        // ne doit pas être ramenée ici.
+        const gameElements = container.querySelectorAll('.game_box_wrap.initial_favorite');
 
         const games = [];
         gameElements.forEach(element => {
-            // Le tri ELO réaffiche tout : le masquage ne vaut qu'en arène (tri Rank)
-            element.style.display = 'block';
+            // On ne démasque que les jeux masqués par le script (tri Rank) :
+            // forcer display:block écraserait le masquage que BGA applique
+            // quand une carte est ouverte.
+            if (element.dataset.ebRankHidden) {
+                element.style.display = '';
+                delete element.dataset.ebRankHidden;
+            }
             const gameEloElement = element.querySelector('.myelo_value');
             // NaN ou absence de .myelo_value => -9999
             const gameElo = gameEloElement ? parseInt(gameEloElement.textContent, 10) : NaN;
@@ -970,8 +979,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     }
     function sortByArenaRank() {
         logDebug('sortByArenaRank() - START', lobbySortDir);
-        const gameElements = document.querySelectorAll('.game_box_wrap.initial_favorite');
         const container = document.getElementById('favorite_games_list');
+        if (!container) return;
+        const gameElements = container.querySelectorAll('.game_box_wrap.initial_favorite');
 
         const games = [];
         gameElements.forEach(element => {
@@ -983,10 +993,15 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             // Masquer si pas d'ELO, ELO < 100, ELO non affiché ("~~") ou jeu en bêta
             if (!myEloValue || parseInt(myEloValue.textContent, 10) < 100 || myEloValue.textContent === '~~' || betaGame) {
                 element.style.display = 'none';
+                element.dataset.ebRankHidden = '1'; // Masqué par le script (tri Rank)
                 return;
             }
 
-            element.style.display = 'block'; // Make sure that all non filtered elements are shown
+            // On ne démasque que les jeux masqués par le script (voir sortByElo).
+            if (element.dataset.ebRankHidden) {
+                element.style.display = '';
+                delete element.dataset.ebRankHidden;
+            }
 
             if (myArenaLeague && myArenaLabel) {
                 let leagueValue = parseInt(myArenaLeague.classList[1].replace('league_', '')) || 0;
