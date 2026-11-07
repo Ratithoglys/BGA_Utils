@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.52
+// @version      0.53
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -198,8 +198,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     /* GAMES > Player color - Once per load **/
     const observer_color = new MutationObserver(betterPlayerColorNotification);
 
-    /* PLAY NOW > Tables ELO coloring - All the time */
-    const observer_gametables = new MutationObserver(playnow_loop);
+    /* PLAY NOW > Tables ELO coloring - All the time (debounce 0.53 : chaque
+       nouvelle table déclenchait un rescan complet — on attend 150 ms que
+       le DOM se calme avant de lancer playnow_loop). */
+    let lobbyTimer = null;
+    const observer_gametables = new MutationObserver(() => { clearTimeout(lobbyTimer); lobbyTimer = setTimeout(playnow_loop, 150); });
 
     /* GAMES LIST > Favorite Heart */
     const observer_favorite_games = new MutationObserver(favoriteGames_loop);
@@ -213,6 +216,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     let lobbySortKey = null; // 'elo' | 'rank' | null
     let lobbySortDir = 'desc';
     let lobbyDefaultSortDone = false; // Tri par défaut appliqué une seule fois par chargement (0.46)
+    /* Collateur partagé (0.53) : un seul pour tous les tris par nom, au lieu
+       d'en recréer un à chaque comparaison. */
+    const collator = new Intl.Collator('fr', { sensitivity: 'base' });
     let playerSortKey = 'name'; // 'name' | 'elo' — tri par défaut : par nom
     let playerSortDir = 'asc';
 
@@ -260,6 +266,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         // Coloration du joueur (uniquement si on est sur une page de jeu)
         if (isTablePage()) {
             observer_color.observe(document.body, config_stree);
+            // Borne de 10 s (0.53) : si le plateau n'a jamais la structure
+            // attendue, on arrête de surveiller au lieu d'écouter indéfiniment.
+            setTimeout(() => observer_color.disconnect(), 10000);
         }
 
         // Profil > Groupes en liste (https://boardgamearena.com/player?section=groups)
@@ -306,7 +315,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (links.length === 0) {
             return false;
         }
-        links.sort((a, b) => a.textContent.trim().localeCompare(b.textContent.trim(), 'fr', { sensitivity: 'base' }));
+        links.sort((a, b) => collator.compare(a.textContent.trim(), b.textContent.trim()));
         const list = document.createElement('ul');
         list.className = 'eb-groups-list';
         links.forEach((link) => {
@@ -393,12 +402,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (playerSortKey === 'elo') {
             games.sort((a, b) => playerSortDir === 'desc' ? b.eloValue - a.eloValue : a.eloValue - b.eloValue);
         } else {
-            games.sort((a, b) => playerSortDir === 'desc' ? b.gameName.localeCompare(a.gameName, 'fr', { sensitivity: 'base' }) : a.gameName.localeCompare(b.gameName, 'fr', { sensitivity: 'base' }));
+            games.sort((a, b) => playerSortDir === 'desc' ? collator.compare(b.gameName, a.gameName) : collator.compare(a.gameName, b.gameName));
         }
 
-        games.forEach(game => {
-            container.appendChild(game.element);
-        });
+        container.append(...games.map(game => game.element));
         logDebug('sortPlayerGames() - END', playerSortKey, playerSortDir);
     }
 
@@ -948,9 +955,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         }
 
         // Réorganiser les éléments dans le conteneur
-        games.forEach(game => {
-            container.appendChild(game.element);
-        });
+        container.append(...games.map(game => game.element));
         logDebug('sortByElo() - END');
     }
 
@@ -1013,9 +1018,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         });
 
         // Re-append the elements to the container in the new order
-        games.forEach(game => {
-            container.appendChild(game.element);
-        });
+        container.append(...games.map(game => game.element));
         logDebug('sortByArenaRank() - Tables sorted by Arena Rank');
         logDebug('sortByArenaRank() - END');
     }
@@ -1063,7 +1066,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         document.querySelectorAll('.table_status_additional').forEach(e => {
             if (e.innerText == '(Friendly mode)') {
                 e.closest('.gametable').style.backgroundColor = 'lightgrey';
-                e.closest('.gametable').querySelector('div.gametable_colored_indicator').innerHTML = '<div class="friendly_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">💙</div>';
+                const indicator = e.closest('.gametable').querySelector('div.gametable_colored_indicator');
+                if (indicator && !indicator.querySelector('.friendly_indicator')) {
+                    indicator.innerHTML = '<div class="friendly_indicator" style="font-size: 3em; position: relative; left: -10px; transform:translateY(50%);">💙</div>';
+                }
             }
         });
 
