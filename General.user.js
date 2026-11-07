@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.59
+// @version      0.60
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -840,13 +840,19 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     function playnow_loop() {
         if (!isLobby()) return;
 
-        if (document.querySelector('#gamelobby_inner')) {
-            logDebug('playnow_loop() - START');
-            observer_gametables.disconnect();
+        const lobbyInner = document.querySelector('#gamelobby_inner');
+        if (!lobbyInner) return;
+        logDebug('playnow_loop() - START');
+        observer_gametables.disconnect();
+        try {
             gameTables_page_ui();
             improveGameTables();
-            logDebug('playnow_loop() - END');
+        } catch (e) {
+            console.error('BGA_GEN> playnow_loop', e);
+        } finally {
+            observer_gametables.observe(lobbyInner, config_stree);
         }
+        logDebug('playnow_loop() - END');
     }
 
     /** Tables **/
@@ -1157,7 +1163,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             }
 
             if (myArenaLeague && myArenaLabel) {
-                let leagueValue = parseInt(myArenaLeague.classList[1].replace('league_', '')) || 0;
+                const leagueClass = [...myArenaLeague.classList].find(c => c.startsWith('league_'));
+                let leagueValue = parseInt(leagueClass?.slice(7), 10) || 0;
                 let labelValue = parseInt(myArenaLabel.textContent, 10) || 0;
 
                 // the higher the league number, the better
@@ -1257,7 +1264,6 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     /** Tables ELO **/
     function improveGameTables() {
         logDebug('improveGameTables() - START');
-        observer_gametables.disconnect();
         // (0.59) Plus de fond rose pour gamerank_apprentice/beginner : la
         // couleur du niveau (levelColors) s'applique, sinon le badge 0-100
         // restait rose au lieu de vert (Beginner) / bleu (Apprentice).
@@ -1282,9 +1288,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             }
         });
 
-        if (document.querySelector('#gamelobby_inner') !== null) {
-            observer_gametables.observe(document.querySelector('#gamelobby_inner'), config_stree);
-        }
+        // (0.60) L'observateur est rouvert par le finally de
+        // playnow_loop, pas ici.
         logDebug('improveGameTables() - END');
     }
 
