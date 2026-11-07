@@ -1217,22 +1217,29 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             const { bg, fg } = badgeColorsForLevel(level);
             // Le badge natif BGA prend les mêmes couleurs (il est affiché
             // sur le standard ; en arène il est dans le masque au survol).
+            // Soulignement : le lien parent souligne le texte — on le
+            // retire ici (badge natif + valeur ELO).
             const nativeBadge = element.querySelector('.wannaplay_mask_button.myelo');
             if (nativeBadge) {
                 nativeBadge.style.backgroundColor = bg;
                 nativeBadge.style.color = fg;
+                nativeBadge.style.setProperty('text-decoration', 'none', 'important');
             }
+            if (eloEl) eloEl.style.setProperty('text-decoration', 'none', 'important');
             // Pastille : seulement s'il y a un ELO à afficher.
             if (isNaN(elo) || !leagueEl) return;
             let badge = element.querySelector('.eb-arena-elo-badge');
             if (!badge) {
                 badge = document.createElement('span');
                 badge.className = 'eb-arena-elo-badge';
-                badge.style.cssText = 'display:block;position:relative;transform:translateY(-34px);padding:0 5px;border-radius:8px;font-size:11px;line-height:16px;text-align:center;';
+                badge.style.cssText = 'display:block;position:relative;transform:translateY(-34px);padding:0 5px;border-radius:8px;font-size:11px;line-height:16px;text-align:center;text-decoration:none !important;';
                 leagueEl.after(badge);
             }
             badge.style.backgroundColor = bg;
             badge.style.color = fg;
+            // À appliquer à chaque passage, pas seulement à la création —
+            // sinon une pastille déjà existante garde le soulignement.
+            badge.style.setProperty('text-decoration', 'none', 'important');
             badge.textContent = 'ELO ' + elo;
         });
         logDebug('addArenaEloBadges() - END');
@@ -1246,11 +1253,13 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             const elo = eloEl ? parseInt(eloEl.textContent, 10) : NaN;
             const level = !isNaN(elo) ? eloToLevel(elo) : levelFromGamerankClass(element);
             if (!level) return;
+            if (eloEl) eloEl.style.setProperty('text-decoration', 'none', 'important');
             const nativeBadge = element.querySelector('.wannaplay_mask_button.myelo');
             if (!nativeBadge) return;
             const { bg, fg } = badgeColorsForLevel(level);
             nativeBadge.style.backgroundColor = bg;
             nativeBadge.style.color = fg;
+            nativeBadge.style.setProperty('text-decoration', 'none', 'important');
         });
     }
 
