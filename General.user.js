@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.62
+// @version      0.63
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -234,6 +234,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     let lobbySortDir = 'desc';
     let lobbyDefaultSortDone = false; // Tri par défaut appliqué une seule fois par chargement (0.46)
     let lastArenaSeasonRunning = null; // Pour relancer le tri par défaut au changement de lobby (arène <-> standard, 0.54)
+    let lobbyResortTimer = null; // Re-tri différé (0.63) : un seul handle, annulé à chaque clic
     /* Collateur partagé (0.53) : un seul pour tous les tris par nom, au lieu
        d'en recréer un à chaque comparaison. */
     const collator = new Intl.Collator('fr', { sensitivity: 'base' });
@@ -903,8 +904,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             updateLobbySortIndicators();
             // Re-tri différé : BGA re-rend la liste à la fermeture du menu
             // Display Options, après notre tri. On le ré-applique une fois
-            // BGA fini.
-            setTimeout(() => {
+            // BGA fini. (0.63) Un seul handle : deux clics rapides ne se
+            // croisent plus, le timer du premier est annulé par le second.
+            clearTimeout(lobbyResortTimer);
+            lobbyResortTimer = setTimeout(() => {
                 sortFn();
                 updateLobbySortIndicators();
             }, 200);
