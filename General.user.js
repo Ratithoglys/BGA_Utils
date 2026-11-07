@@ -1258,7 +1258,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     function improveGameTables() {
         logDebug('improveGameTables() - START');
         observer_gametables.disconnect();
-        document.querySelectorAll('.gamerank_apprentice, .gamerank_beginner').forEach(e => { e.style.backgroundColor = 'pink' });
+        // (0.59) Plus de fond rose pour gamerank_apprentice/beginner : la
+        // couleur du niveau (levelColors) s'applique, sinon le badge 0-100
+        // restait rose au lieu de vert (Beginner) / bleu (Apprentice).
         document.querySelectorAll('.how_to_play_button').forEach(e => { e.style.backgroundColor = 'lightgreen' });
 
         document.querySelectorAll('.table_status_additional').forEach(e => {
