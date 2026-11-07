@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.58
+// @version      0.59
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -238,6 +238,79 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     const collator = new Intl.Collator('fr', { sensitivity: 'base' });
     let playerSortKey = 'name'; // 'name' | 'elo' — tri par défaut : par nom
     let playerSortDir = 'asc';
+
+    /* Couleurs des niveaux ELO (définies par Len, palette unique pour
+       les tables et les badges) : froid sous Average, chaud au-dessus,
+       neutre au pivot (Average = gris clair). Assez saturées pour rester
+       lisibles sur les petites pastilles et distinguer le jaune Good du
+       gris Average ; les lauriers blancs restent visibles.
+       Beginner 0 et tuto en vert (même vert), Apprentice et 1-100 en
+       bleu (même bleu) — sinon trop de verts différents à l'aperçu. */
+    const levelColors = {
+        'Beginner': '#70ad47',
+        'Apprentice': '#5b9bd5',
+        'Average': '#d9d9d9',
+        'Good player': '#ffd700',
+        'Strong player': '#ff7eb9',
+        'Expert': '#ff6b6b',
+        'Master': '#ff0000'
+    };
+
+    /* Niveau ELO d'après la FAQ BGA (tranches fixes pour tous les jeux) :
+       Beginner 0, Apprentice 1-99, Average 100-199, Good player 200-299,
+       Strong player 300-499, Expert 500-699, Master 700+. */
+    function eloToLevel(elo) {
+        if (elo <= 0) return 'Beginner';
+        if (elo < 100) return 'Apprentice';
+        if (elo < 200) return 'Average';
+        if (elo < 300) return 'Good player';
+        if (elo < 500) return 'Strong player';
+        if (elo < 700) return 'Expert';
+        return 'Master';
+    }
+
+    /* Couleur de texte lisible sur un fond : sombre sur fond clair,
+       blanc sur fond sombre (luminance). */
+    function textColorForBg(hex) {
+        const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+        if (!m) return '#333';
+        const lum = (0.299 * parseInt(m[1], 16) + 0.587 * parseInt(m[2], 16) + 0.114 * parseInt(m[3], 16)) / 255;
+        return lum > 0.5 ? '#333' : '#fff';
+    }
+
+    /* Couleurs du badge ELO pour un niveau donné : fond = couleur du
+       niveau (levelColors), texte = lisible sur ce fond. */
+    function badgeColorsForLevel(level) {
+        const bg = levelColors[level] || '#333';
+        return { bg, fg: textColorForBg(bg) };
+    }
+
+    /* Couleurs du badge ELO pour un ELO donné. */
+    function eloBadgeColors(elo) {
+        return badgeColorsForLevel(eloToLevel(elo));
+    }
+
+    /* Niveau d'après une classe gamerank_* sur la boîte (jeux sans ELO
+       affiché mais avec un rang, ex. Dédale). */
+    function levelFromGamerankClass(element) {
+        const map = {
+            beginner: 'Beginner',
+            apprentice: 'Apprentice',
+            average: 'Average',
+            good: 'Good player',
+            goodplayer: 'Good player',
+            strong: 'Strong player',
+            strongplayer: 'Strong player',
+            expert: 'Expert',
+            master: 'Master'
+        };
+        const els = [element, ...element.querySelectorAll('[class*="gamerank_"]')];
+        for (const el of els) {
+            const m = (el.getAttribute('class') || '').match(/gamerank_([a-z]+)/);
+            if (m && map[m[1]]) return map[m[1]];
+        }
+        return null;
+    }
 
     /* LOBBY > Attend que #gamelobby_inner apparaisse avant de le surveiller */
     const observer_lobby_wait = new MutationObserver((mutations, obs) => {
@@ -883,6 +956,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                     sortByELOMenuItem.click();
                 }
 
+                // Badges ELO natifs aux couleurs des niveaux de Len.
+                recolorNativeEloBadges();
+
                 /* Filtering popup */
                 if (document.querySelector('#ebBox-GameTableMgr') == null) {
                     addBox('GameTableMgr');
@@ -1121,33 +1197,33 @@ div[aria-label=turnBasedNotesIncent] { display: none }
        (span, sans les classes .wannaplay_mask_button / .myelo) : le clone
        du badge natif (0.45) créait un doublon .myelo_value que les tris
        et BGA confondaient avec l'original, ce qui cassait le show/hide.
-       Couleur reprise du badge natif BGA (varie selon le niveau) via
-       getComputedStyle, sinon fond sombre par défaut. Insérée après la
-       ligue et remontée de 34px en dur. */
+       Couleur = levelColors (palette unique tables + badges), d'après le
+       niveau ELO (tranches fixes FAQ BGA) ou, sans ELO affiché, d'après
+       la classe gamerank_* (ex. Dédale) ; le badge natif BGA prend les
+       mêmes couleurs. Pastille créée seulement s'il y a un ELO à
+       afficher. Insérée après la ligue et remontée de 34px en dur. */
     function addArenaEloBadges() {
         logDebug('addArenaEloBadges() - START');
         document.querySelectorAll('.game_box_wrap.initial_favorite').forEach(element => {
             // Retirer un éventuel clone natif (0.45) s'il existe encore
             element.querySelectorAll('.eb-arena-elo-clone').forEach(clone => clone.remove());
             const eloEl = element.querySelector('.myelo_value');
-            if (!eloEl) return;
-            const elo = parseInt(eloEl.textContent, 10);
-            if (isNaN(elo)) return; // ELO invalide ("~~") : pas de badge
+            const elo = eloEl ? parseInt(eloEl.textContent, 10) : NaN;
             const leagueEl = element.querySelector('.myarena_league');
-            if (!leagueEl) return;
-            // Couleur du niveau : celle du badge natif BGA (elle varie
-            // selon le niveau) ; sinon fond sombre par défaut.
+            // Niveau : par l'ELO si présent, sinon par la classe gamerank_*
+            // (jeux sans ELO affiché mais avec un rang, ex. Dédale).
+            const level = !isNaN(elo) ? eloToLevel(elo) : levelFromGamerankClass(element);
+            if (!level) return;
+            const { bg, fg } = badgeColorsForLevel(level);
+            // Le badge natif BGA prend les mêmes couleurs (il est affiché
+            // sur le standard ; en arène il est dans le masque au survol).
             const nativeBadge = element.querySelector('.wannaplay_mask_button.myelo');
-            let bg = null;
-            let fg = null;
-            for (const el of [nativeBadge, eloEl]) {
-                if (!el) continue;
-                const cs = window.getComputedStyle(el);
-                if (!bg && cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent') bg = cs.backgroundColor;
-                if (!fg && cs.color) fg = cs.color;
+            if (nativeBadge) {
+                nativeBadge.style.backgroundColor = bg;
+                nativeBadge.style.color = fg;
             }
-            bg = bg || '#333';
-            fg = fg || '#fff';
+            // Pastille : seulement s'il y a un ELO à afficher.
+            if (isNaN(elo) || !leagueEl) return;
             let badge = element.querySelector('.eb-arena-elo-badge');
             if (!badge) {
                 badge = document.createElement('span');
@@ -1160,6 +1236,22 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             badge.textContent = 'ELO ' + elo;
         });
         logDebug('addArenaEloBadges() - END');
+    }
+
+    /* Recolore les badges ELO natifs BGA avec les couleurs de niveaux de
+       Len (lobby standard : le badge natif est affiché tel quel). */
+    function recolorNativeEloBadges() {
+        document.querySelectorAll('.game_box_wrap.initial_favorite').forEach(element => {
+            const eloEl = element.querySelector('.myelo_value');
+            const elo = eloEl ? parseInt(eloEl.textContent, 10) : NaN;
+            const level = !isNaN(elo) ? eloToLevel(elo) : levelFromGamerankClass(element);
+            if (!level) return;
+            const nativeBadge = element.querySelector('.wannaplay_mask_button.myelo');
+            if (!nativeBadge) return;
+            const { bg, fg } = badgeColorsForLevel(level);
+            nativeBadge.style.backgroundColor = bg;
+            nativeBadge.style.color = fg;
+        });
     }
 
     /** Tables ELO **/
@@ -1179,14 +1271,6 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             }
         });
 
-        const levelColors = {
-            'Beginner': '#b0e0e6',
-            'Apprentice': '#ccebc5',
-            'Good player': '#ffffe0',
-            'Strong player': '#ffc0cb',
-            'Expert': '#ff8080',
-            'Master': '#ff0000'
-        };
         document.querySelectorAll('.playersummary').forEach(e => {
             const color = levelColors[e.textContent.trim()];
             if (color) {
