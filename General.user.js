@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.50
+// @version      0.51
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -263,7 +263,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         }
 
         // Profil > Groupes en liste (https://boardgamearena.com/player?section=groups)
-        if (/boardgamearena\.com\/player/.test(document.baseURI)) {
+        if (location.pathname === '/player') {
             if (!listPlayerGroups()) {
                 // Pas encore là (ex: navigation SPA) : on attend son apparition
                 logDebug('Groups Wait - En attente de #playergroups...');
