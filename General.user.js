@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.66
+// @version      0.66.1
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -626,18 +626,21 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         /* GAMES : Button linking to the game page and tutorial, tournament/arena/friendly info */
         if (isGamePage() && document.querySelector('#game-logo') == null) {
             logDebug('addGamesButtons() - game page detected and #game-logo is null');
-            if (typeof gameui === 'undefined' || !gameui.game_name || !gameui.game_display_name) {
-                logDebug('addGamesButtons() - gameui is undefined or game info is empty, returning');
-                return;
+            // (0.66.1) Ne pas quitter la fonction si gameui / #site-logo ne sont
+            // pas encore prêts : on saute juste l'insertion. Sinon, la fonction
+            // sort avant d'avoir posé #backToTables / #langFR, et l'observateur
+            // peut se couper alors que #game-logo n'est toujours pas là
+            // (régression 0.64).
+            if (typeof gameui !== 'undefined' && gameui.game_name) {
+                const siteLogo = document.querySelector('#site-logo');
+                if (siteLogo) {
+                    const displayName = (gameui.game_display_name || gameui.game_name).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+                    siteLogo.insertAdjacentHTML('beforebegin','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + displayName + '"></a>' + (isFavoriteGame() ? '<span class="eb-game-fav">❤️</span>' : '') + '</div> <div id="ebgame-tuto"><a id="gametutoicon" href="/tutorial?game=' + gameui.game_name + '">👨‍🎓</a></div>');
+                    logDebug('addGamesButtons() - #game-logo button added');
+
+                    markTableType();
+                }
             }
-
-            const siteLogo = document.querySelector('#site-logo');
-            if (!siteLogo) return;
-            const displayName = gameui.game_display_name.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-            siteLogo.insertAdjacentHTML('beforebegin','<div id="game-logo"><a id="gamelogoicon" href="/gamepanel?game=' + gameui.game_name + '"><img id="gamelogoiconsrc" src="https://x.boardgamearena.net/data/data/gamemedia/' + gameui.game_name + '/icon/default.png" alt="' + displayName + '"></a>' + (isFavoriteGame() ? '<span class="eb-game-fav">❤️</span>' : '') + '</div> <div id="ebgame-tuto"><a id="gametutoicon" href="/tutorial?game=' + gameui.game_name + '">👨‍🎓</a></div>');
-            logDebug('addGamesButtons() - #game-logo button added');
-
-            markTableType();
         }
 
         /* MENU : liens desktop + mobile (l'ordre du tableau est l'ordre
@@ -689,8 +692,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         }
 
         /* Sur une page de jeu / tutoriel : on coupe l'observateur dès que les
-           deux boutons du #upperrightmenu sont posés. */
-        if (isGameOrTutorial() && document.querySelector('#backToTables') !== null && document.querySelector('#langFR') !== null) {
+           deux boutons du #upperrightmenu sont posés, ET que #game-logo est
+           présent sur une page de jeu (0.66.1) : sinon, l'observateur se
+           coupait alors que le logo n'avait pas pu être posé (gameui /
+           #site-logo pas encore prêts), et il n'était plus jamais réessayé. */
+        if (isGameOrTutorial() && document.querySelector('#backToTables') !== null && document.querySelector('#langFR') !== null && (!isGamePage() || document.querySelector('#game-logo') !== null)) {
             observer_menu.disconnect();
             logDebug('observer_menu - disconnected (game page buttons present)');
         }
