@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.64
+// @version      0.65
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -285,11 +285,6 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     function badgeColorsForLevel(level) {
         const bg = levelColors[level] || '#333';
         return { bg, fg: textColorForBg(bg) };
-    }
-
-    /* Couleurs du badge ELO pour un ELO donné. */
-    function eloBadgeColors(elo) {
-        return badgeColorsForLevel(eloToLevel(elo));
     }
 
     /* Niveau d'après une classe gamerank_* sur la boîte (jeux sans ELO
@@ -925,110 +920,106 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
     function gameTables_page_ui() {
         logDebug('gameTables_page_ui() - START');
-        if (isLobby()) {
-            logDebug('gameTables_page_ui() - lobby page detected');
-            reshowLobbyGames();
-            const sortMenuTitle = document.getElementById('favorite_sort_menu_title');
-            if (!sortMenuTitle || !sortMenuTitle.nextElementSibling) return; // Menu de tri pas encore monté : on réessaiera au prochain passage (l'observateur est reconnecté par improveGameTables)
-            const sortMenu = sortMenuTitle.nextElementSibling;
-            const sortbySection = sortMenu.querySelector('.sortby_section');
-            const sortByEloOption = document.getElementById('favorite_sortby_elo');
-            const sortByArenaRankOption = document.getElementById('favorite_sortby_rank');
-            const sortByPopularity = document.getElementById('favorite_sortby_popularity');
+        logDebug('gameTables_page_ui() - lobby page detected');
+        reshowLobbyGames();
+        const sortMenuTitle = document.getElementById('favorite_sort_menu_title');
+        if (!sortMenuTitle || !sortMenuTitle.nextElementSibling) return; // Menu de tri pas encore monté : on réessaiera au prochain passage (l'observateur est reconnecté par improveGameTables)
+        const sortMenu = sortMenuTitle.nextElementSibling;
+        const sortbySection = sortMenu.querySelector('.sortby_section');
+        const sortByEloOption = document.getElementById('favorite_sortby_elo');
+        const sortByArenaRankOption = document.getElementById('favorite_sortby_rank');
+        const sortByPopularity = document.getElementById('favorite_sortby_popularity');
 
-            if (sortByPopularity) {
-                logDebug('gameTables_page_ui() - removing sortByPopularity');
-                sortByPopularity.remove();
+        if (sortByPopularity) {
+            logDebug('gameTables_page_ui() - removing sortByPopularity');
+            sortByPopularity.remove();
+        }
+
+        // Arena season state: #arena-season-end is visible while a season is running
+        // (null-safe: if BGA ever removes the element, fall back to ELO sorting)
+        const arenaSeasonRunning = document.querySelector('#arena-season-end')?.checkVisibility() ?? false;
+
+        if (lastArenaSeasonRunning !== null && arenaSeasonRunning !== lastArenaSeasonRunning) {
+            // Changement de lobby (arène <-> standard) : le tri par défaut
+            // doit se relancer, sinon le masquage Rank (arène) reste appliqué
+            // sur le lobby standard et les alpha/beta restent cachés (0.54).
+            lobbyDefaultSortDone = false;
+        }
+        lastArenaSeasonRunning = arenaSeasonRunning;
+
+        /* Sort by ELO option (dans les deux lobbys : le tri ELO est aussi
+           disponible en arène, pour retrouver les jeux masqués par Rank). */
+        if (!sortByEloOption) {
+            addSortOption(sortbySection, 'favorite_sortby_elo', 'Sort by ELO', sortByElo, 'elo', 'desc');
+        }
+
+        if (!arenaSeasonRunning) {
+            logDebug('gameTables_page_ui() - arena season not running');
+            if (sortByArenaRankOption) {
+                logDebug('gameTables_page_ui() - removing sortByArenaRankOption');
+                sortByArenaRankOption.remove();
             }
 
-            // Arena season state: #arena-season-end is visible while a season is running
-            // (null-safe: if BGA ever removes the element, fall back to ELO sorting)
-            const arenaSeasonRunning = document.querySelector('#arena-season-end')?.checkVisibility() ?? false;
-
-            if (lastArenaSeasonRunning !== null && arenaSeasonRunning !== lastArenaSeasonRunning) {
-                // Changement de lobby (arène <-> standard) : le tri par défaut
-                // doit se relancer, sinon le masquage Rank (arène) reste appliqué
-                // sur le lobby standard et les alpha/beta restent cachés (0.54).
-                lobbyDefaultSortDone = false;
+            // Tri par défaut (ELO) appliqué une seule fois par chargement :
+            // ensuite, le choix manuel de l'utilisateur n'est plus écrasé.
+            // Garde = lobbySortKey (état du script), pas la classe
+            // 'selected' du menu (état BGA, désynchronisée : ELO peut
+            // l'avoir alors que le tri actif est Rank) — sinon le défaut
+            // ne s'applique pas après un basculement de lobby, et la
+            // liste reste triée par Rank sur le standard.
+            const sortByELOMenuItem = document.getElementById('favorite_sortby_elo');
+            if (!lobbyDefaultSortDone && sortByELOMenuItem && lobbySortKey !== 'elo') {
+                lobbyDefaultSortDone = true;
+                logDebug('gameTables_page_ui() - simulating click on sortByELOMenuItem');
+                sortByELOMenuItem.click();
             }
-            lastArenaSeasonRunning = arenaSeasonRunning;
 
-            if (!arenaSeasonRunning) {
-                logDebug('gameTables_page_ui() - arena season not running');
-                if (sortByArenaRankOption) {
-                    logDebug('gameTables_page_ui() - removing sortByArenaRankOption');
-                    sortByArenaRankOption.remove();
-                }
+            // Badges ELO natifs aux couleurs des niveaux de Len.
+            recolorNativeEloBadges();
 
-                /* Sort by ELO option */
-                if (sortMenu && !sortByEloOption) {
-                    addSortOption(sortbySection, 'favorite_sortby_elo', 'Sort by ELO', sortByElo, 'elo', 'desc');
-                }
-
-                // Tri par défaut (ELO) appliqué une seule fois par chargement :
-                // ensuite, le choix manuel de l'utilisateur n'est plus écrasé.
-                // Garde = lobbySortKey (état du script), pas la classe
-                // 'selected' du menu (état BGA, désynchronisée : ELO peut
-                // l'avoir alors que le tri actif est Rank) — sinon le défaut
-                // ne s'applique pas après un basculement de lobby, et la
-                // liste reste triée par Rank sur le standard.
-                const sortByELOMenuItem = document.getElementById('favorite_sortby_elo');
-                if (!lobbyDefaultSortDone && sortByELOMenuItem && lobbySortKey !== 'elo') {
-                    lobbyDefaultSortDone = true;
-                    logDebug('gameTables_page_ui() - simulating click on sortByELOMenuItem');
-                    sortByELOMenuItem.click();
-                }
-
-                // Badges ELO natifs aux couleurs des niveaux de Len.
-                recolorNativeEloBadges();
-
-                /* Filtering popup */
-                if (document.querySelector('#ebBox-GameTableMgr') == null) {
-                    addBox('GameTableMgr');
-                    addBoxBtn('GameTableMgr', 'Show 0 tables', () => expandTables('.gamerank_beginner'));
-                    addBoxBtn('GameTableMgr', 'Hide 0 tables', () => collapseTables('.gamerank_beginner'));
-                    addBoxBtn('GameTableMgr', 'Show 1-100 tables', () => expandTables('.gamerank_apprentice'));
-                    addBoxBtn('GameTableMgr', 'Hide 1-100 tables', () => collapseTables('.gamerank_apprentice'));
-                    addBoxBtn('GameTableMgr', 'Show Alpha tables', () => expandTables('.alpha_game'));
-                    addBoxBtn('GameTableMgr', 'Hide Alpha tables', () => collapseTables('.alpha_game'));
-                    addBoxBtn('GameTableMgr', 'Show Beta tables', () => expandTables('.beta_game'));
-                    addBoxBtn('GameTableMgr', 'Hide Beta tables', () => collapseTables('.beta_game'));
-                    addBoxBtn('GameTableMgr', 'Hide all', collapseAllTables);
-                    addBoxBtn('GameTableMgr', 'Order ELO', () => { toggleLobbySort('elo', 'desc'); sortByElo(); updateLobbySortIndicators(); });
-                    logDebug('gameTables_page_ui() - GameTableMgr box added');
-                }
+            /* Filtering popup */
+            if (document.querySelector('#ebBox-GameTableMgr') == null) {
+                addBox('GameTableMgr');
+                addBoxBtn('GameTableMgr', 'Show 0 tables', () => expandTables('.gamerank_beginner'));
+                addBoxBtn('GameTableMgr', 'Hide 0 tables', () => collapseTables('.gamerank_beginner'));
+                addBoxBtn('GameTableMgr', 'Show 1-100 tables', () => expandTables('.gamerank_apprentice'));
+                addBoxBtn('GameTableMgr', 'Hide 1-100 tables', () => collapseTables('.gamerank_apprentice'));
+                addBoxBtn('GameTableMgr', 'Show Alpha tables', () => expandTables('.alpha_game'));
+                addBoxBtn('GameTableMgr', 'Hide Alpha tables', () => collapseTables('.alpha_game'));
+                addBoxBtn('GameTableMgr', 'Show Beta tables', () => expandTables('.beta_game'));
+                addBoxBtn('GameTableMgr', 'Hide Beta tables', () => collapseTables('.beta_game'));
+                addBoxBtn('GameTableMgr', 'Hide all', collapseAllTables);
+                addBoxBtn('GameTableMgr', 'Order ELO', () => { toggleLobbySort('elo', 'desc'); sortByElo(); updateLobbySortIndicators(); });
+                logDebug('gameTables_page_ui() - GameTableMgr box added');
             }
-            else {
-                logDebug('gameTables_page_ui() - arena season running');
-                /* Sort by ELO option (en arène aussi : permet de réafficher
-                   les jeux masqués par le tri Rank) */
-                if (sortMenu && !sortByEloOption) {
-                    addSortOption(sortbySection, 'favorite_sortby_elo', 'Sort by ELO', sortByElo, 'elo', 'desc');
-                }
+        }
+        else {
+            logDebug('gameTables_page_ui() - arena season running');
 
-                /* Sort by Arena Ranking option */
-                if (sortMenu && !sortByArenaRankOption) {
-                    addSortOption(sortbySection, 'favorite_sortby_rank', 'Sort by Rank', sortByArenaRank, 'rank', 'desc');
-                }
-
-                // Tri par défaut (Rank) appliqué une seule fois par chargement.
-                // Garde = lobbySortKey, comme pour ELO (voir ci-dessus).
-                const sortByRankMenuItem = document.getElementById('favorite_sortby_rank');
-                if (!lobbyDefaultSortDone && sortByRankMenuItem && lobbySortKey !== 'rank') {
-                    lobbyDefaultSortDone = true;
-                    logDebug('gameTables_page_ui() - simulating click on sortByRankMenuItem');
-                    sortByRankMenuItem.click();
-                }
-
-                const gameTableMgrBox = document.querySelector('#ebBox-GameTableMgr');
-                if (gameTableMgrBox) {
-                    logDebug('gameTables_page_ui() - removing #ebBox-GameTableMgr');
-                    gameTableMgrBox.remove();
-                }
-
-                // Badge ELO visible sur les jeux (l'ELO natif est dans le masque au survol)
-                addArenaEloBadges();
+            /* Sort by Arena Ranking option */
+            if (!sortByArenaRankOption) {
+                addSortOption(sortbySection, 'favorite_sortby_rank', 'Sort by Rank', sortByArenaRank, 'rank', 'desc');
             }
+
+            // Tri par défaut (Rank) appliqué une seule fois par chargement.
+            // Garde = lobbySortKey, comme pour ELO (voir ci-dessus).
+            const sortByRankMenuItem = document.getElementById('favorite_sortby_rank');
+            if (!lobbyDefaultSortDone && sortByRankMenuItem && lobbySortKey !== 'rank') {
+                lobbyDefaultSortDone = true;
+                logDebug('gameTables_page_ui() - simulating click on sortByRankMenuItem');
+                sortByRankMenuItem.click();
+            }
+
+            const gameTableMgrBox = document.querySelector('#ebBox-GameTableMgr');
+            if (gameTableMgrBox) {
+                logDebug('gameTables_page_ui() - removing #ebBox-GameTableMgr');
+                gameTableMgrBox.remove();
+            }
+
+            // Badges ELO natifs aux couleurs des niveaux + pastille visible
+            // sur les jeux (l'ELO natif est dans le masque au survol).
+            recolorNativeEloBadges();
+            addArenaEloBadges();
         }
         logDebug('gameTables_page_ui() - END');
     }
@@ -1226,27 +1217,25 @@ div[aria-label=turnBasedNotesIncent] { display: none }
        la classe gamerank_* (ex. Dédale) ; le badge natif BGA prend les
        mêmes couleurs. Pastille créée seulement s'il y a un ELO à
        afficher. Insérée après la ligue et remontée de 34px en dur. */
+    /* ELO et niveau d'une boîte de jeu : par l'ELO si présent, sinon par la
+       classe gamerank_* (jeux sans ELO affiché mais avec un rang, ex. Dédale). */
+    function boxLevel(element) {
+        const eloEl = element.querySelector('.myelo_value');
+        const elo = eloEl ? parseInt(eloEl.textContent, 10) : NaN;
+        const level = !isNaN(elo) ? eloToLevel(elo) : levelFromGamerankClass(element);
+        return { elo, level };
+    }
+
+    /* Pastille ELO visible sur les jeux en arène. Le badge natif est
+       recoloré par recolorNativeEloBadges (appelée aussi en arène). */
     function addArenaEloBadges() {
         logDebug('addArenaEloBadges() - START');
         document.querySelectorAll('.game_box_wrap').forEach(element => {
-            // Retirer un éventuel clone natif (0.45) s'il existe encore
-            element.querySelectorAll('.eb-arena-elo-clone').forEach(clone => clone.remove());
-            const eloEl = element.querySelector('.myelo_value');
-            const elo = eloEl ? parseInt(eloEl.textContent, 10) : NaN;
-            const leagueEl = element.querySelector('.myarena_league');
-            // Niveau : par l'ELO si présent, sinon par la classe gamerank_*
-            // (jeux sans ELO affiché mais avec un rang, ex. Dédale).
-            const level = !isNaN(elo) ? eloToLevel(elo) : levelFromGamerankClass(element);
+            const { elo, level } = boxLevel(element);
             if (!level) return;
             const { bg, fg } = badgeColorsForLevel(level);
-            // Le badge natif BGA prend les mêmes couleurs (il est affiché
-            // sur le standard ; en arène il est dans le masque au survol).
-            const nativeBadge = element.querySelector('.wannaplay_mask_button.myelo');
-            if (nativeBadge) {
-                nativeBadge.style.backgroundColor = bg;
-                nativeBadge.style.color = fg;
-            }
             // Pastille : seulement s'il y a un ELO à afficher.
+            const leagueEl = element.querySelector('.myarena_league');
             if (isNaN(elo) || !leagueEl) return;
             let badge = element.querySelector('.eb-arena-elo-badge');
             if (!badge) {
@@ -1263,12 +1252,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     }
 
     /* Recolore les badges ELO natifs BGA avec les couleurs de niveaux de
-       Len (lobby standard : le badge natif est affiché tel quel). */
+       Len (lobby standard : le badge natif est affiché tel quel ; en arène
+       il est dans le masque au survol). */
     function recolorNativeEloBadges() {
         document.querySelectorAll('.game_box_wrap').forEach(element => {
-            const eloEl = element.querySelector('.myelo_value');
-            const elo = eloEl ? parseInt(eloEl.textContent, 10) : NaN;
-            const level = !isNaN(elo) ? eloToLevel(elo) : levelFromGamerankClass(element);
+            const { level } = boxLevel(element);
             if (!level) return;
             const nativeBadge = element.querySelector('.wannaplay_mask_button.myelo');
             if (!nativeBadge) return;
