@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.60
+// @version      0.61
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -175,7 +175,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (location.href !== lastUrl) {
             lastUrl = location.href;
             logDebug('URL Change detected to:', lastUrl);
-            init(); // On relance la logique globale
+            try { init(); } catch (e) { console.error('BGA_GEN> init', e); } // On relance la logique globale
         }
     }
     const nativePushState = history.pushState.bind(history);
@@ -213,6 +213,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
     /* GAMES > Player color - Once per load **/
     const observer_color = new MutationObserver(betterPlayerColorNotification);
+    let colorTimer = null; // Borne 10 s de observer_color (0.61) : annulée à chaque init()
 
     /* PLAY NOW > Tables ELO coloring - All the time (debounce 0.53 : chaque
        nouvelle table déclenchait un rescan complet — on attend 150 ms que
@@ -358,7 +359,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             observer_color.observe(document.body, config_stree);
             // Borne de 10 s (0.53) : si le plateau n'a jamais la structure
             // attendue, on arrête de surveiller au lieu d'écouter indéfiniment.
-            setTimeout(() => observer_color.disconnect(), 10000);
+            // (0.61) Le timer précédent est annulé : sinon celui d'une init
+            // précédente couperait l'observation de la suivante si l'URL
+            // change dans les 10 s.
+            clearTimeout(colorTimer);
+            colorTimer = setTimeout(() => observer_color.disconnect(), 10000);
         }
 
         // Profil > Groupes en liste (https://boardgamearena.com/player?section=groups)
