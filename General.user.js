@@ -1079,34 +1079,48 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     }
 
     /* Badge ELO en arène : le badge natif (.myelo) est dans le masque au
-       survol, invisible au repos — on le clone (mêmes classes, laurier)
-       au-dessus de la ligue, visible en permanence. Inséré après la ligue
-       (peint dessus) et remonté de 34px en dur : ligue 40x40 à y=28,
-       clone 24x24 en flux à y=36, 2px d'écart. */
+       survol, invisible au repos — on ajoute une pastille propre avec
+       l'ELO à côté de la ligue, visible en permanence. Pastille simple
+       (span, sans les classes .wannaplay_mask_button / .myelo) : le clone
+       du badge natif (0.45) créait un doublon .myelo_value que les tris
+       et BGA confondaient avec l'original, ce qui cassait le show/hide.
+       Couleur reprise du badge natif BGA (varie selon le niveau) via
+       getComputedStyle, sinon fond sombre par défaut. Insérée après la
+       ligue et remontée de 34px en dur. */
     function addArenaEloBadges() {
         logDebug('addArenaEloBadges() - START');
         document.querySelectorAll('.game_box_wrap.initial_favorite').forEach(element => {
-            const eloBadgeEl = element.querySelector('.wannaplay_mask_button.myelo');
-            if (!eloBadgeEl) return;
-            const elo = parseInt(eloBadgeEl.querySelector('.myelo_value')?.textContent ?? '', 10);
+            // Retirer un éventuel clone natif (0.45) s'il existe encore
+            element.querySelectorAll('.eb-arena-elo-clone').forEach(clone => clone.remove());
+            const eloEl = element.querySelector('.myelo_value');
+            if (!eloEl) return;
+            const elo = parseInt(eloEl.textContent, 10);
             if (isNaN(elo)) return; // ELO invalide ("~~") : pas de badge
             const leagueEl = element.querySelector('.myarena_league');
             if (!leagueEl) return;
-            let clone = element.querySelector('.eb-arena-elo-clone');
-            if (!clone) {
-                clone = eloBadgeEl.cloneNode(true);
-                clone.removeAttribute('id'); // Pas de doublon d'id
-                clone.removeAttribute('style'); // Le positionnement du masque ne vaut pas ici
-                clone.classList.add('eb-arena-elo-clone');
-                clone.style.position = 'relative'; // En flux dans le coin
-                clone.style.display = 'block';
-                clone.style.visibility = 'visible';
-                clone.style.opacity = '1';
-                clone.style.transform = 'translateY(-34px)'; // 34px en dur (voir commentaire)
-                leagueEl.after(clone); // Après la ligue : peint dessus
+            // Couleur du niveau : celle du badge natif BGA (elle varie
+            // selon le niveau) ; sinon fond sombre par défaut.
+            const nativeBadge = element.querySelector('.wannaplay_mask_button.myelo');
+            let bg = null;
+            let fg = null;
+            for (const el of [nativeBadge, eloEl]) {
+                if (!el) continue;
+                const cs = window.getComputedStyle(el);
+                if (!bg && cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent') bg = cs.backgroundColor;
+                if (!fg && cs.color) fg = cs.color;
             }
-            const cloneValue = clone.querySelector('.myelo_value');
-            if (cloneValue) cloneValue.textContent = elo;
+            bg = bg || '#333';
+            fg = fg || '#fff';
+            let badge = element.querySelector('.eb-arena-elo-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'eb-arena-elo-badge';
+                badge.style.cssText = 'display:block;position:relative;transform:translateY(-34px);padding:0 5px;border-radius:8px;font-size:11px;line-height:16px;text-align:center;';
+                leagueEl.after(badge);
+            }
+            badge.style.backgroundColor = bg;
+            badge.style.color = fg;
+            badge.textContent = 'ELO ' + elo;
         });
         logDebug('addArenaEloBadges() - END');
     }
