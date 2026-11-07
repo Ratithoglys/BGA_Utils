@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.55.1
+// @version      0.56
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -166,15 +166,31 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 `
 
     // --- GESTION DU CHANGEMENT D'URL (SPA) ---
+    // BGA est une SPA : la navigation change l'URL via l'API History sans
+    // recharger la page. On intercepte directement pushState/replaceState
+    // et popstate (précédent/suivant), au lieu de surveiller tout le DOM
+    // avec un MutationObserver pour détecter le changement d'URL.
     let lastUrl = location.href;
-    const urlObserver = new MutationObserver(() => {
+    function onUrlChange() {
         if (location.href !== lastUrl) {
             lastUrl = location.href;
             logDebug('URL Change detected to:', lastUrl);
             init(); // On relance la logique globale
         }
-    });
-    urlObserver.observe(document, { subtree: true, childList: true });
+    }
+    const nativePushState = history.pushState.bind(history);
+    const nativeReplaceState = history.replaceState.bind(history);
+    history.pushState = function(...args) {
+        const result = nativePushState(...args);
+        onUrlChange();
+        return result;
+    };
+    history.replaceState = function(...args) {
+        const result = nativeReplaceState(...args);
+        onUrlChange();
+        return result;
+    };
+    window.addEventListener('popstate', onUrlChange);
 
     document.body.insertAdjacentHTML('beforeend','<div id="ebumna-boxes"></div>');
 
