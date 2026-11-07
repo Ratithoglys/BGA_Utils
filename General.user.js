@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.48
+// @version      0.49
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -757,7 +757,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         logDebug('gameTables_page_ui() - START');
         if (isLobby()) {
             logDebug('gameTables_page_ui() - lobby page detected');
-            const sortMenu = document.getElementById('favorite_sort_menu_title').nextElementSibling;
+            const sortMenuTitle = document.getElementById('favorite_sort_menu_title');
+            if (!sortMenuTitle || !sortMenuTitle.nextElementSibling) return; // Menu de tri pas encore monté : on réessaiera au prochain passage (l'observateur est reconnecté par improveGameTables)
+            const sortMenu = sortMenuTitle.nextElementSibling;
             const sortbySection = sortMenu.querySelector('.sortby_section');
             const sortByEloOption = document.getElementById('favorite_sortby_elo');
             const sortByArenaRankOption = document.getElementById('favorite_sortby_rank');
