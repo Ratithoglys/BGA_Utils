@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.61
+// @version      0.62
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -432,6 +432,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         if (document.querySelector('#pagesection_prestige') == null) {
             return;
         }
+        // (0.62) Contenu pas encore rendu : on garde l'observateur branché
+        // (il relancera cette fonction à l'arrivée des .palmares_game) au
+        // lieu de le couper avant d'avoir coloré/trié quoi que ce soit.
+        if (!document.querySelector('.palmares_game')) return;
 
         observer_player_games.disconnect(); // Arrêter l'observateur pour éviter les boucles infinies pendant la modification
 
@@ -448,7 +452,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         const gameRanks = new Map();
         globalUserInfos.game_list.forEach(game => {
             // S'assurer que l'ID est une chaîne de caractères pour une comparaison fiable
-            gameRanks.set(game.id.toString(), game.player_rank);
+            const id = game.id?.toString();
+            if (id != null) gameRanks.set(id, game.player_rank);
         });
 
         // 2. Parcourir tous les jeux affichés sur la page de prestige
