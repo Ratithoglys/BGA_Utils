@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.51
+// @version      0.52
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -984,8 +984,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             element.style.display = 'block'; // Make sure that all non filtered elements are shown
 
             if (myArenaLeague && myArenaLabel) {
-                let leagueValue = parseInt(myArenaLeague.classList[1].replace('league_', ''));
-                let labelValue = parseInt(myArenaLabel.textContent, 10);
+                let leagueValue = parseInt(myArenaLeague.classList[1].replace('league_', '')) || 0;
+                let labelValue = parseInt(myArenaLabel.textContent, 10) || 0;
 
                 // the higher the league number, the better
                 // the lower the arena_label value, the better
