@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: GamesInProgress & Tournaments
 // @namespace    https://ebumna.net/
-// @version      0.27
+// @version      0.28
 // @description  BoardGameArena: Better GamesInProgress window
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -215,7 +215,11 @@ img.emblem { background-color: white; }
         }
         else if (/boardgamearena\.com\/tournament\?id=/.test(document.baseURI)) {
             observer_tournament.observe(document.body, config_stree);
-            observer_calendar.observe(document.body, config_element);
+            // Calendrier : config_stree (subtree) et non config_element —
+            // la modale « Add to agenda » n'est pas un enfant direct de
+            // body, donc config_element (subtree: false) ne la voyait plus
+            // et l'interception ne se faisait plus.
+            observer_calendar.observe(document.body, config_stree);
         }
         else {
             //observer_gamesPanel.disconnect();
@@ -603,11 +607,13 @@ function improveTournamentDetailsPanel() {
         // 1. Chercher toutes les modales ouvertes
         const modals = document.querySelectorAll('.bga-popup-modal__holder');
 
-        // 2. Trouver la modale spécifique "Add to agenda"
-        const agendaModal = Array.from(modals).find(modal => {
-            const title = modal.querySelector('[slot="title"]');
-            return title && title.textContent.includes('Add to agenda');
-        });
+        // 2. Trouver la modale "Add to agenda". BGA a supprimé le slot="title"
+        // (le titre est désormais un simple DIV sans slot, slot=null), donc
+        // on identifie la modale par la présence du lien Google Calendar,
+        // qui n'apparaît que dans celle-ci.
+        const agendaModal = Array.from(modals).find(modal =>
+            modal.querySelector('a[href^="https://calendar.google.com/"]')
+        );
         if (!agendaModal) return;
 
         // 3. Cibler le lien Google Calendar dans cette popup
