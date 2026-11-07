@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.65.1
+// @version      0.66
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -58,7 +58,7 @@
         "mystlingacademy"
     ]
 
-    document.head.appendChild(document.createElement('style')).innerHTML = `
+    document.head.appendChild(document.createElement('style')).textContent = `
 #pagemaintitletext { color: black; }
 #game-logo { top: 5px; margin: 0 6px; position: relative; }
 .eb-game-fav { position: absolute; top: 4px; right: -18px; font-size: 20px; line-height: 1; pointer-events: none; }
@@ -191,8 +191,6 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         return result;
     };
     window.addEventListener('popstate', onUrlChange);
-
-    document.body.insertAdjacentHTML('beforeend','<div id="ebumna-boxes"></div>');
 
     const config_stree = {
         childList: true,
@@ -389,9 +387,6 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             }
         }
     }
-
-    // Premier lancement
-    init();
 
     /* PROFIL > Groupes : une ligne par groupe, triée par ordre alphabétique, au lieu
        d'une seule ligne séparée par des virgules. #playergroups contient des liens
@@ -1305,6 +1300,11 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     /* BOXING UI */
     function addBox(bName) {
         logDebug('addBox() - START', bName);
+        // Conteneur créé à la demande (0.66) : plus de div vide sur les
+        // pages qui n'utilisent aucune boîte.
+        if (!document.querySelector('#ebumna-boxes')) {
+            document.body.insertAdjacentHTML('beforeend', '<div id="ebumna-boxes"></div>');
+        }
         document.querySelector('#ebumna-boxes').insertAdjacentHTML('beforeend','<div id="ebBox-'+bName+'" class="ebBox"><div class="ebBoxBackground"><div class="ebBoxLayers"></div></div></div>');
         logDebug('addBox() - END', bName);
     }
@@ -1326,4 +1326,8 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         logDebug('addBoxBtn() - END', bName, content, clickCallback);
     }
     /* BOXING UI */
+
+    // Premier lancement (0.66) : en fin d'IIFE, après toutes les déclarations,
+    // pour ne plus dépendre de l'ordre des const/let (fragilité TDZ latente).
+    init();
 })();
