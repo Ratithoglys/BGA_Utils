@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.68
+// @version      0.69
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -28,6 +28,50 @@
     const isLobby = () => /lobby/.test(location.pathname);
     const isGamelist = () => /gamelist/.test(location.pathname);
     const isTablePage = () => /^\/\d+\//.test(location.pathname) && location.search.includes('table');
+
+    /* (0.69, pt 26) Sélecteurs BGA les plus exposés (audit Claude) : si BGA
+       change son DOM, le script casse silencieusement. On logue une seule
+       fois (en DEBUG) ceux qui manquent sur la page courante, 3 s après
+       init() pour laisser le contenu se rendre. Chaque sélecteur n'est
+       vérifié que sur les pages où il est attendu ; un élément
+       conditionnel (arène, favoris) absent de la page courante peut
+       apparaître ici sans que BGA ait rien changé. tableinfos.html et
+       l'option 201 ne sont pas des sélecteurs DOM : non vérifiables ici. */
+    const exposedSelectors = [
+        { sel: '[href="/headlines"]', when: () => window.self === window.top },
+        { sel: '[href="/lobby"]', when: () => window.self === window.top },
+        // (0.69) Grille / carrousel : ce sont les vues « liste de jeux »
+        // (markFavoriteGames), pas le lobby des boîtes — vérifiés sur
+        // /gamelist/ uniquement, sinon faux positif sur le lobby.
+        { sel: '.bga-game-grid > div > a', when: isGamelist },
+        { sel: '.bga-game-browser-carousel__item', when: isGamelist },
+        { sel: '#favorite_sort_menu_title', when: isLobby },
+        { sel: '.sortby_section', when: isLobby },
+        { sel: '.game_box_wrap.initial_favorite', when: isLobby },
+        { sel: '.myelo_value', when: isLobby },
+        { sel: '.wannaplay_mask_button.myelo', when: isLobby },
+        { sel: '.myarena_league', when: () => isLobby() && document.body.classList.contains('arena_mode') },
+        { sel: '.arena_label', when: () => isLobby() && document.body.classList.contains('arena_mode') },
+        // (0.69) .table_status_additional retiré : trop conditionnel (seules
+        // certaines tables affichent un statut) — son absence ne prouve pas
+        // un changement BGA. .gametable_colored_indicator n'est vérifié que
+        // s'il y a des tables listées.
+        { sel: '.gametable_colored_indicator', when: () => isLobby() && !!document.querySelector('.gametable') },
+        { sel: '.palmares_game', when: () => location.pathname === '/player' },
+        { sel: '.gamerank_value', when: () => location.pathname === '/player' },
+        { sel: '.pagesection__title', when: () => location.pathname === '/player' },
+    ];
+    let selectorsCheckTimer = null;
+    function checkExposedSelectors() {
+        const applicable = exposedSelectors.filter(({ when }) => { try { return when(); } catch { return false; } });
+        if (!applicable.length) return; // Rien à vérifier sur cette page
+        const missing = applicable.map(({ sel }) => sel).filter(sel => !document.querySelector(sel));
+        if (missing.length) {
+            logDebug('[DIAG SELECTEURS] Absents sur cette page (à vérifier si BGA a changé son DOM) :', missing.join(', '));
+        } else {
+            logDebug('[DIAG SELECTEURS] Tous présents sur cette page.');
+        }
+    }
 
     // let excludedGames = GM_getValue('excludedGames', []).map(entry => {
     //     return entry;
@@ -360,6 +404,10 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
     function init() {
         lobbyDefaultSortDone = false; // Nouveau chargement : le tri par défaut sera réappliqué une fois
+        // (0.69, pt 26) Diagnostic des sélecteurs exposés, une seule fois
+        // par navigation, 3 s après init() pour laisser le contenu se rendre.
+        clearTimeout(selectorsCheckTimer);
+        selectorsCheckTimer = setTimeout(checkExposedSelectors, 3000);
         observer_lobby_wait.disconnect();
         observer_groups_wait.disconnect();
         observer_player_games.disconnect();
