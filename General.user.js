@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.47
+// @version      0.48
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -616,9 +616,9 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             return;
         }
 
-        /* MENU */
-        observer_mobilemenu.disconnect();
-
+        /* MENU : on ne coupe l'observateur qu'une fois les 4 liens posés
+           (ou sur une page de jeu, où ils ne sont jamais posés) — sinon,
+           une ancre absente au premier passage ne serait jamais réessayée. */
         const vertical = document.querySelector('.bga-menu-bar-items.bga-vertical');
         const notGamePage = !isGamePage();
 
@@ -632,10 +632,13 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         ];
         mobileButtons.forEach(([id, href, label, anchor, withCont]) => {
             if (document.getElementById(id) === null && notGamePage) {
-                vertical.querySelector('[href="' + anchor + '"]').insertAdjacentHTML('afterend', '<a id="' + id + '" class="' + verticalMenuLinkClass() + '" href="' + href + '"><div class="' + treeIconClass() + '"></div>' + (withCont ? ' <div class="' + treeIconContClass() + '"></div>' : '') + label + '</a>');
+                vertical.querySelector('[href="' + anchor + '"]')?.insertAdjacentHTML('afterend', '<a id="' + id + '" class="' + verticalMenuLinkClass() + '" href="' + href + '"><div class="' + treeIconClass() + '"></div>' + (withCont ? ' <div class="' + treeIconContClass() + '"></div>' : '') + label + '</a>');
                 logDebug('addMobileGamesButtons() - #' + id + ' button added');
             }
         });
+        if (!notGamePage || mobileButtons.every(([id]) => document.getElementById(id) !== null)) {
+            observer_mobilemenu.disconnect();
+        }
         logDebug('addMobileGamesButtons() - END');
     }
 
