@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: General
 // @namespace    http://ebumna.net/
-// @version      0.54
+// @version      0.55
 // @description  Misc utils for BoardGameArena
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*
@@ -21,13 +21,13 @@
         if (DEBUG) console.debug('BGA_GEN> ', msgs);
     };
 
-    // Page courante (BGA est une SPA : document.baseURI change sans rechargement)
-    const isGamePage = () => /boardgamearena\.com\/\d+\//.test(document.baseURI);
-    const isTutorialPage = () => /boardgamearena\.com\/tutorial\?/.test(document.baseURI);
+    // Page courante (BGA est une SPA : location.pathname change sans rechargement)
+    const isGamePage = () => /^\/\d+\//.test(location.pathname);
+    const isTutorialPage = () => /tutorial/.test(location.pathname);
     const isGameOrTutorial = () => isGamePage() || isTutorialPage();
-    const isLobby = () => /boardgamearena\.com\/lobby/.test(document.baseURI);
-    const isGamelist = () => /boardgamearena\.com\/gamelist/.test(document.baseURI);
-    const isTablePage = () => /boardgamearena\.com\/\d+\/.*?\?table=.*/.test(document.baseURI);
+    const isLobby = () => /lobby/.test(location.pathname);
+    const isGamelist = () => /gamelist/.test(location.pathname);
+    const isTablePage = () => /^\/\d+\//.test(location.pathname) && location.search.includes('table');
 
     // let excludedGames = GM_getValue('excludedGames', []).map(entry => {
     //     return entry;
@@ -498,8 +498,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
    iframe : globalUserInfos est dans la fenêtre parente. */
     function isFavoriteGame() {
         try {
-            const top = (typeof unsafeWindow !== 'undefined' ? unsafeWindow : window).top;
-            return [true, 1, '1'].includes(top.globalUserInfos.game_list.find(g => g.name === gameui.game_name)?.favorite);
+            return [true, 1, '1'].includes(window.top.globalUserInfos.game_list.find(g => g.name === gameui.game_name)?.favorite);
         } catch (e) {
             return false;
         }
@@ -597,8 +596,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
         /* Sur une page de jeu / tutoriel : on coupe l'observateur dès que les
            deux boutons du #upperrightmenu sont posés. */
-        const onGameOrTutorial = isGameOrTutorial();
-        if (onGameOrTutorial && document.querySelector('#backToTables') !== null && document.querySelector('#langFR') !== null) {
+        if (isGameOrTutorial() && document.querySelector('#backToTables') !== null && document.querySelector('#langFR') !== null) {
             observer_menu.disconnect();
             logDebug('observer_menu - disconnected (game page buttons present)');
         }
@@ -761,6 +759,46 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     }
 
     /** Tables **/
+    /* Crée une option de tri ("Sort by ELO" / "Sort by Rank") : même
+       création d'élément, même clic (tri + coche + sélection). */
+    function addSortOption(sortbySection, id, label, sortFn, sortKey, defaultDir) {
+        logDebug('addSortOption() - creating sort option', id);
+        const newMenuItem = document.createElement('a');
+        newMenuItem.href = '#';
+        newMenuItem.classList.add('bga-link', 'login-menu-item', 'sortby', 'notselected');
+        newMenuItem.id = id;
+        newMenuItem.textContent = label;
+
+        newMenuItem.addEventListener('click', function(event) {
+            logDebug('addSortOption() - sort option clicked', id);
+            event.preventDefault();
+            toggleLobbySort(sortKey, defaultDir);
+            sortFn();
+
+            // Update menu item selection visually
+            const existingSelected = sortbySection.querySelector('.selected');
+            if (existingSelected) {
+                existingSelected.classList.remove('selected');
+                existingSelected.classList.add('notselected');
+
+                // Remove the checkmark icon (if it exists)
+                const checkmarkIcon = existingSelected.querySelector('.fa-check');
+                if (checkmarkIcon) {
+                    existingSelected.removeChild(checkmarkIcon);
+                }
+            }
+            // Add the checkmark icon to the newly selected item
+            newMenuItem.classList.add('selected');
+            newMenuItem.classList.remove('notselected');
+            updateLobbySortIndicators();
+        });
+
+        // Insert the new menu item before "Sort by name"
+        const nameMenuItem = document.getElementById('favorite_sortby_name');
+        sortbySection.insertBefore(newMenuItem, nameMenuItem);
+        logDebug('addSortOption() - sort option added to menu', id);
+    }
+
     function gameTables_page_ui() {
         logDebug('gameTables_page_ui() - START');
         if (isLobby()) {
@@ -773,46 +811,6 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             const sortByEloOption = document.getElementById('favorite_sortby_elo');
             const sortByArenaRankOption = document.getElementById('favorite_sortby_rank');
             const sortByPopularity = document.getElementById('favorite_sortby_popularity');
-
-            /* Crée une option de tri ("Sort by ELO" / "Sort by Rank") : même
-               création d'élément, même clic (tri + coche + sélection). */
-            function addSortOption(id, label, sortFn, sortKey, defaultDir) {
-                logDebug('gameTables_page_ui() - creating sort option', id);
-                const newMenuItem = document.createElement('a');
-                newMenuItem.href = '#';
-                newMenuItem.classList.add('bga-link', 'login-menu-item', 'sortby', 'notselected');
-                newMenuItem.id = id;
-                newMenuItem.textContent = label;
-
-                newMenuItem.addEventListener('click', function(event) {
-                    logDebug('gameTables_page_ui() - sort option clicked', id);
-                    event.preventDefault();
-                    toggleLobbySort(sortKey, defaultDir);
-                    sortFn();
-
-                    // Update menu item selection visually
-                    const existingSelected = sortbySection.querySelector('.selected');
-                    if (existingSelected) {
-                        existingSelected.classList.remove('selected');
-                        existingSelected.classList.add('notselected');
-
-                        // Remove the checkmark icon (if it exists)
-                        const checkmarkIcon = existingSelected.querySelector('.fa-check');
-                        if (checkmarkIcon) {
-                            existingSelected.removeChild(checkmarkIcon);
-                        }
-                    }
-                    // Add the checkmark icon to the newly selected item
-                    newMenuItem.classList.add('selected');
-                    newMenuItem.classList.remove('notselected');
-                    updateLobbySortIndicators();
-                });
-
-                // Insert the new menu item before "Sort by name"
-                const nameMenuItem = document.getElementById('favorite_sortby_name');
-                sortbySection.insertBefore(newMenuItem, nameMenuItem);
-                logDebug('gameTables_page_ui() - sort option added to menu', id);
-            }
 
             if (sortByPopularity) {
                 logDebug('gameTables_page_ui() - removing sortByPopularity');
@@ -840,7 +838,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
 
                 /* Sort by ELO option */
                 if (sortMenu && !sortByEloOption) {
-                    addSortOption('favorite_sortby_elo', 'Sort by ELO', sortByElo, 'elo', 'desc');
+                    addSortOption(sortbySection, 'favorite_sortby_elo', 'Sort by ELO', sortByElo, 'elo', 'desc');
                 }
 
                 // Tri par défaut (ELO) appliqué une seule fois par chargement :
@@ -873,12 +871,12 @@ div[aria-label=turnBasedNotesIncent] { display: none }
                 /* Sort by ELO option (en arène aussi : permet de réafficher
                    les jeux masqués par le tri Rank) */
                 if (sortMenu && !sortByEloOption) {
-                    addSortOption('favorite_sortby_elo', 'Sort by ELO', sortByElo, 'elo', 'desc');
+                    addSortOption(sortbySection, 'favorite_sortby_elo', 'Sort by ELO', sortByElo, 'elo', 'desc');
                 }
 
                 /* Sort by Arena Ranking option */
                 if (sortMenu && !sortByArenaRankOption) {
-                    addSortOption('favorite_sortby_rank', 'Sort by Rank', sortByArenaRank, 'rank', 'desc');
+                    addSortOption(sortbySection, 'favorite_sortby_rank', 'Sort by Rank', sortByArenaRank, 'rank', 'desc');
                 }
 
                 // Tri par défaut (Rank) appliqué une seule fois par chargement.
