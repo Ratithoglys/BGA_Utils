@@ -216,6 +216,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
     let lobbySortKey = null; // 'elo' | 'rank' | null
     let lobbySortDir = 'desc';
     let lobbyDefaultSortDone = false; // Tri par défaut appliqué une seule fois par chargement (0.46)
+    let lastArenaSeasonRunning = null; // Pour relancer le tri par défaut au changement de lobby (arène <-> standard, 0.54)
     /* Collateur partagé (0.53) : un seul pour tous les tris par nom, au lieu
        d'en recréer un à chaque comparaison. */
     const collator = new Intl.Collator('fr', { sensitivity: 'base' });
@@ -764,6 +765,7 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         logDebug('gameTables_page_ui() - START');
         if (isLobby()) {
             logDebug('gameTables_page_ui() - lobby page detected');
+            reshowLobbyGames();
             const sortMenuTitle = document.getElementById('favorite_sort_menu_title');
             if (!sortMenuTitle || !sortMenuTitle.nextElementSibling) return; // Menu de tri pas encore monté : on réessaiera au prochain passage (l'observateur est reconnecté par improveGameTables)
             const sortMenu = sortMenuTitle.nextElementSibling;
@@ -820,6 +822,14 @@ div[aria-label=turnBasedNotesIncent] { display: none }
             // Arena season state: #arena-season-end is visible while a season is running
             // (null-safe: if BGA ever removes the element, fall back to ELO sorting)
             const arenaSeasonRunning = document.querySelector('#arena-season-end')?.checkVisibility() ?? false;
+
+            if (lastArenaSeasonRunning !== null && arenaSeasonRunning !== lastArenaSeasonRunning) {
+                // Changement de lobby (arène <-> standard) : le tri par défaut
+                // doit se relancer, sinon le masquage Rank (arène) reste appliqué
+                // sur le lobby standard et les alpha/beta restent cachés (0.54).
+                lobbyDefaultSortDone = false;
+            }
+            lastArenaSeasonRunning = arenaSeasonRunning;
 
             if (!arenaSeasonRunning) {
                 logDebug('gameTables_page_ui() - arena season not running');
@@ -926,6 +936,32 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         });
     }
 
+    /* Réaffiche les jeux de la liste à chaque passage (0.54) : depuis la
+       0.46 le tri par défaut ne tourne qu'une fois, donc le display:block
+       de sortByElo ne réaffichait plus les jeux que BGA masque après le
+       chargement. On réaffiche ici sans relancer le tri (le choix manuel
+       n'est pas écrasé). Hors arène (lobby standard), on retire aussi le
+       marqueur du tri Rank : rien ne doit y être masqué (ELO < 100, alpha,
+       bêta). On ne force jamais display:block : BGA masque la boîte
+       d'origine quand une carte est ouverte, et la forcer visible la
+       laisserait vide (bug 0.37). On ne touche qu'aux boîtes dont le
+       contenu (.game_box) est intact ; une boîte sans .game_box est une
+       carte ouverte, on la laisse masquée. En arène, on ne fait rien (le
+       masquage Rank est respecté). */
+    function reshowLobbyGames() {
+        const arenaSeasonRunning = document.querySelector('#arena-season-end')?.checkVisibility() ?? false;
+        if (arenaSeasonRunning) return;
+        document.querySelectorAll('#favorite_games_list .game_box_wrap.initial_favorite').forEach(element => {
+            if (!element.querySelector('.game_box')) return; // carte ouverte : contenu déplacé, on ne touche pas
+            if (element.dataset.ebRankHidden) {
+                delete element.dataset.ebRankHidden;
+            }
+            if (element.style.display === 'none') {
+                element.style.display = '';
+            }
+        });
+    }
+
     function sortByElo() {
         logDebug('sortByElo() - START', lobbySortDir);
         const container = document.getElementById('favorite_games_list');
@@ -935,12 +971,16 @@ div[aria-label=turnBasedNotesIncent] { display: none }
         // ne doit pas être ramenée ici.
         const gameElements = container.querySelectorAll('.game_box_wrap.initial_favorite');
 
+        // En arène, le masquage Rank (ELO < 100, alpha, bêta) est conservé
+        // même après un tri ELO : on ne démasque que hors arène (0.54).
+        const arenaSeasonRunning = document.querySelector('#arena-season-end')?.checkVisibility() ?? false;
+
         const games = [];
         gameElements.forEach(element => {
-            // On ne démasque que les jeux masqués par le script (tri Rank) :
-            // forcer display:block écraserait le masquage que BGA applique
-            // quand une carte est ouverte.
-            if (element.dataset.ebRankHidden) {
+            // On ne démasque que les jeux masqués par le script (tri Rank),
+            // et seulement hors arène : forcer display:block écraserait le
+            // masquage que BGA applique quand une carte est ouverte.
+            if (!arenaSeasonRunning && element.dataset.ebRankHidden) {
                 element.style.display = '';
                 delete element.dataset.ebRankHidden;
             }
