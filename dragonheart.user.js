@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BoardGameArena: Games: Dragonheart
 // @namespace    https://ebumna.net/
-// @version      0.2
+// @version      0.3
 // @description  BoardGameArena: Games: Dragonheart
 // @author       Lénaïc JAOUEN
 // @match        https://boardgamearena.com/*/dragonheart?table=*
@@ -22,6 +22,12 @@
     const config_attributes = { attributes: true, attributeFilter: ['style']};
     const config_childList = { childList: true, subtree: true }; // Observe childList changes on the board
 
+    // (0.3) Observateur du plateau et plateau observé, déclarés ici pour
+    // que updateCardCounts puisse suspendre l'observation pendant ses
+    // propres écritures (voir ci-dessous).
+    let boardObserver = null;
+    let boardElement = null;
+
     function updateBorder(mutation) {
       if (mutation.target.style.borderWidth === '1px') {
           mutation.target.style.borderWidth = '3px';
@@ -31,19 +37,35 @@
     }
 
     function updateCardCounts() {
-        for (let i = 0; i <= 5; i++) {
-            const place = document.getElementById(`place_${i}_1`);
-            if (place) {
-                const count = place.querySelectorAll(CARD_SELECTOR).length;
+        // (0.3) Boucle infinie corrigée : boardObserver surveille #board,
+        // et chaque écriture de cette fonction dans #board (appendChild du
+        // compteur, textContent même à valeur identique) le redéclenchait,
+        // donc updateCardCounts se relançait indéfiniment et l'onglet se
+        // figeait dès l'ouverture de la table. On suspend l'observateur
+        // pendant nos écritures, et on ne réécrit un compteur que si sa
+        // valeur a réellement changé.
+        if (boardObserver) boardObserver.disconnect();
+        try {
+            for (let i = 0; i <= 5; i++) {
+                const place = document.getElementById(`place_${i}_1`);
+                if (place) {
+                    const count = place.querySelectorAll(CARD_SELECTOR).length;
 
-                // Find or create the counter element
-                let counter = place.querySelector('.card-count');
-                if (!counter) {
-                    counter = document.createElement('span');
-                    counter.classList.add('card-count');
-                    place.appendChild(counter);
+                    // Find or create the counter element
+                    let counter = place.querySelector('.card-count');
+                    if (!counter) {
+                        counter = document.createElement('span');
+                        counter.classList.add('card-count');
+                        place.appendChild(counter);
+                    }
+                    if (counter.textContent !== String(count)) {
+                        counter.textContent = count;
+                    }
                 }
-                counter.textContent = count;
+            }
+        } finally {
+            if (boardObserver && boardElement) {
+                boardObserver.observe(boardElement, config_childList);
             }
         }
     }
@@ -67,7 +89,8 @@
         });
 
         // Observer for card count changes on the board
-        const boardObserver = new MutationObserver(updateCardCounts);
+        boardElement = board;
+        boardObserver = new MutationObserver(updateCardCounts);
         boardObserver.observe(board, config_childList);
 
         // Initial card count update
@@ -75,12 +98,18 @@
     }
 
     // Wait for the game elements to be present before starting the script
+    // (0.3) Plafond de 60 s : si les éléments n'apparaissent jamais, on
+    // abandonne au lieu de sonder indéfiniment.
+    let waitAttempts = 0;
     const waitForGameElements = setInterval(() => {
         const myHand = document.querySelector(MY_HAND_SELECTOR);
         const board = document.querySelector(BOARD_SELECTOR);
         if (myHand && board) {
             clearInterval(waitForGameElements);
             initObservers();
+        } else if (++waitAttempts >= 120) {
+            clearInterval(waitForGameElements);
+            console.error('BGA_DRAGONHEART> Éléments du jeu non trouvés après 60 s, abandon.');
         }
     }, 500);
 
